@@ -1,109 +1,60 @@
 @echo off
-chcp 65001 >nul
-setlocal EnableDelayedExpansion
+chcp 1251 >nul
+setlocal
 
-:: ===============================
-:: ÐÐÐ¡Ð¢Ð ÐžÐ™ÐšÐ˜
-:: ===============================
-set CURRENT_VERSION=1.0
-set REPO_RAW=https://raw.githubusercontent.com/poprugunchik/olservice_bat/main
-set VERSION_URL=%REPO_RAW%/version.txt
-set SELF_URL=%REPO_RAW%/aggregator.bat
+:: =====================================
+:: Íàñòðîéêè
+:: =====================================
+set "REPO_RAW=https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/scripts"
+set "WORKDIR=%USERPROFILE%\Downloads\olservice"
+if not exist "%WORKDIR%" mkdir "%WORKDIR%"
 
-set WORKDIR=%temp%\olservice
-set LOG=%ProgramData%\OLService\aggregator.log
-
-mkdir "%WORKDIR%" >nul 2>&1
-mkdir "%ProgramData%\OLService" >nul 2>&1
-
-:: ===============================
-:: Ð¦Ð’Ð•Ð¢
-:: ===============================
-color 0B
-
-:: ===============================
-:: Ð›ÐžÐ“ Ð¡Ð¢ÐÐ Ð¢Ð
-:: ===============================
-echo [%date% %time%] START >> "%LOG%"
-
-:: ===============================
-:: ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ ÐžÐ‘ÐÐžÐ’Ð›Ð•ÐÐ˜Ð¯
-:: ===============================
-curl -fsSL "%VERSION_URL%" -o "%WORKDIR%\version.txt" >nul 2>&1
-
-if exist "%WORKDIR%\version.txt" (
-    set /p REMOTE_VERSION=<"%WORKDIR%\version.txt"
-    if not "%REMOTE_VERSION%"=="%CURRENT_VERSION%" (
-        echo [%date% %time%] UPDATE %REMOTE_VERSION% >> "%LOG%"
-        curl -fsSL "%SELF_URL%" -o "%~f0"
-        echo ÐžÐ±Ð½Ð¾Ð²Ð»ÐµÐ½Ð¾ Ð´Ð¾ Ð²ÐµÑ€ÑÐ¸Ð¸ %REMOTE_VERSION%
-        timeout /t 2 >nul
-        start "" "%~f0"
-        exit /b
-    )
-)
-
-:: ===============================
-:: ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ ÐÐ”ÐœÐ˜ÐÐ
-:: ===============================
+:: =====================================
+:: Ïðîâåðêà àäìèíèñòðàòîðà
+:: =====================================
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Ð—Ð°Ð¿ÑƒÑÐº Ñ Ð¿Ñ€Ð°Ð²Ð°Ð¼Ð¸ Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð°...
     powershell -Command "Start-Process '%~f0' -Verb RunAs"
     exit /b
 )
 
-:: ===============================
-:: ÐœÐ•ÐÐ®
-:: ===============================
 :MENU
 cls
-echo ==========================================
-echo        OLService Utility v%CURRENT_VERSION%
-echo ==========================================
+color 0A
+echo OLService Utility
 echo.
-echo  [1] Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° / Ð½Ð°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ° RustDesk
-echo  [2] Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° iikoCard
-echo  [3] ÐžÑ‡Ð¸ÑÑ‚ÐºÐ° ÑÐ¸ÑÑ‚ÐµÐ¼Ñ‹
+echo 1. RustDesk
+echo 2. iikoCard
+echo 3. Clean
+echo 0. Âûõîä
 echo.
-echo  [0] Ð’Ñ‹Ñ…Ð¾Ð´
-echo.
-set /p CHOICE=Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ð´ÐµÐ¹ÑÑ‚Ð²Ð¸Ðµ: 
+set /p choice=Âûáåðèòå ïóíêò: 
 
-if "%CHOICE%"=="1" set SCRIPT=rustdesk.bat
-if "%CHOICE%"=="2" set SCRIPT=iikocard.bat
-if "%CHOICE%"=="3" set SCRIPT=clean.bat
-if "%CHOICE%"=="0" exit /b
+if "%choice%"=="1" set SCRIPT=rustdesk.bat
+if "%choice%"=="2" set SCRIPT=iikocard.bat
+if "%choice%"=="3" set SCRIPT=clean.bat
+if "%choice%"=="0" goto END
+if not defined SCRIPT goto MENU
 
-if not defined SCRIPT (
-    echo ÐÐµÐ²ÐµÑ€Ð½Ñ‹Ð¹ Ð²Ñ‹Ð±Ð¾Ñ€
-    timeout /t 2 >nul
-    goto MENU
-)
+set URL=%REPO_RAW%/%SCRIPT%
+set LOCAL=%WORKDIR%\%SCRIPT%
 
-:: ===============================
-:: Ð¡ÐšÐÐ§Ð˜Ð’ÐÐÐ˜Ð•
-:: ===============================
-set SCRIPT_URL=%REPO_RAW%/scripts/%SCRIPT%
-set LOCAL_SCRIPT=%WORKDIR%\%SCRIPT%
-
-echo.
-echo Ð—Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° %SCRIPT% ...
-curl -fsSL "%SCRIPT_URL%" -o "%LOCAL_SCRIPT%"
-
-if not exist "%LOCAL_SCRIPT%" (
-    echo ÐžÑˆÐ¸Ð±ÐºÐ° Ð·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸ Ñ„Ð°Ð¹Ð»Ð°
+echo [INFO] Ñêà÷èâàíèå %SCRIPT%...
+curl -fsSL "%URL%" -o "%LOCAL%" 2>nul
+if errorlevel 1 (
+    echo [ERROR] Íå óäàëîñü ñêà÷àòü %SCRIPT%!
     pause
     goto MENU
 )
 
-:: ===============================
-:: Ð—ÐÐŸÐ£Ð¡Ðš
-:: ===============================
-echo [%date% %time%] RUN %SCRIPT% >> "%LOG%"
-call "%LOCAL_SCRIPT%"
+echo [INFO] Çàïóñê %SCRIPT% îò àäìèíèñòðàòîðà â îòäåëüíîì îêíå...
+powershell -Command "Start-Process '%LOCAL%' -Verb RunAs"
 
-echo.
-echo Ð“Ð¾Ñ‚Ð¾Ð²Ð¾
-pause
+echo [INFO] Ñêðèïò çàïóùåí. Âîçâðàò â ìåíþ...
+pause >nul
 goto MENU
+
+:END
+echo.
+pause
+exit /b
