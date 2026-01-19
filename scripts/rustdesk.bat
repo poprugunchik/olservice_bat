@@ -6,9 +6,9 @@ REM ===============================
 REM RustDesk Installer
 REM ===============================
 
-set "FIXED_PW=Zxc123asd456"
-set "SERVER_DOMAIN=rustdesk.olservice.ru"
-set "SERVER_KEY=quiwhfudHvyQv4QQ110KFGDhfrdyEhd8wSXqyzCFGS8="
+
+
+
 set "RD_VER=1.4.5"
 set "TMP_EXE=%TEMP%\rustdesk_setup.exe"
 
