@@ -3,21 +3,21 @@ chcp 1251 >nul
 setlocal enabledelayedexpansion
 
 rem -----------------------------
-rem Выбор действия
+rem Р’С‹Р±РѕСЂ РґРµР№СЃС‚РІРёСЏ
 rem -----------------------------
 echo ============================================
-echo      Выберите действие:
+echo      Р’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ:
 echo.
-echo   1 - Обновить с удалением
-echo   2 - Удалить базу и перезапустить службу
+echo   1 - РћР±РЅРѕРІРёС‚СЊ СЃ СѓРґР°Р»РµРЅРёРµРј
+echo   2 - РЈРґР°Р»РёС‚СЊ Р±Р°Р·Сѓ Рё РїРµСЂРµР·Р°РїСѓСЃС‚РёС‚СЊ СЃР»СѓР¶Р±Сѓ
 echo ============================================
 echo.
-set /p choice="Введите 1 или 2 и нажмите Enter: "
+set /p choice="Р’РІРµРґРёС‚Рµ 1 РёР»Рё 2 Рё РЅР°Р¶РјРёС‚Рµ Enter: "
 
 if "%choice%"=="2" goto REMOVE_AND_RESTART
 if "%choice%"=="1" goto UPDATE_AND_INSTALL
 
-echo Неверный выбор. Завершение работы.
+echo РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ. Р—Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹.
 timeout /t 5 >nul
 exit /b
 
@@ -25,27 +25,27 @@ exit /b
 :REMOVE_AND_RESTART
 echo.
 echo ============================================
-echo УДАЛЕНИЕ БАЗЫ И ПЕРЕЗАПУСК СЛУЖБЫ
+echo РЈР”РђР›Р•РќРР• Р‘РђР—Р« Р РџР•Р Р•Р—РђРџРЈРЎРљ РЎР›РЈР–Р‘Р«
 echo ============================================
 echo.
 
-rem Остановка службы
-echo Остановка службы iikoCard5POS...
+rem РћСЃС‚Р°РЅРѕРІРєР° СЃР»СѓР¶Р±С‹
+echo РћСЃС‚Р°РЅРѕРІРєР° СЃР»СѓР¶Р±С‹ iikoCard5POS...
 net stop iikoCard5POS
 timeout /t 10 /nobreak
 
-rem Удаление базы данных
-echo Удаление базы данных...
+rem РЈРґР°Р»РµРЅРёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С…
+echo РЈРґР°Р»РµРЅРёРµ Р±Р°Р·С‹ РґР°РЅРЅС‹С…...
 rmdir /s /q "C:\Users\iikoCard5POS\AppData\Roaming\iiko" 2>nul
 rmdir /s /q "C:\Windows\ServiceProfiles\iikoCard5POS\AppData\Roaming\iiko" 2>nul
 
-rem Перезапуск службы
-echo Запуск службы iikoCard5POS...
+rem РџРµСЂРµР·Р°РїСѓСЃРє СЃР»СѓР¶Р±С‹
+echo Р—Р°РїСѓСЃРє СЃР»СѓР¶Р±С‹ iikoCard5POS...
 net start iikoCard5POS
 if %errorlevel%==0 (
-    echo Служба успешно запущена.
+    echo РЎР»СѓР¶Р±Р° СѓСЃРїРµС€РЅРѕ Р·Р°РїСѓС‰РµРЅР°.
 ) else (
-    echo Не удалось запустить службу. Проверьте вручную.
+    echo РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ СЃР»СѓР¶Р±Сѓ. РџСЂРѕРІРµСЂСЊС‚Рµ РІСЂСѓС‡РЅСѓСЋ.
 )
 timeout /t 10
 exit /b
@@ -54,75 +54,75 @@ exit /b
 :UPDATE_AND_INSTALL
 echo.
 echo ============================================
-echo ОБНОВЛЕНИЕ С УДАЛЕНИЕМ
+echo РћР‘РќРћР’Р›Р•РќРР• РЎ РЈР”РђР›Р•РќРР•Рњ
 echo ============================================
 echo.
 
 rem -----------------------------
-rem Настройки
+rem РќР°СЃС‚СЂРѕР№РєРё
 rem -----------------------------
 set "DOWNLOAD_URL=https://m1.iiko.cards/ru-RU/About/DownloadPosInstaller?useRc=False"
 set "INSTALLER_PATH=C:\Users\%USERNAME%\Downloads\Setup.iikoCard5.POS.exe"
 
 rem -----------------------------
-rem Остановка службы
+rem РћСЃС‚Р°РЅРѕРІРєР° СЃР»СѓР¶Р±С‹
 rem -----------------------------
-echo Остановка службы iikoCard5POS...
+echo РћСЃС‚Р°РЅРѕРІРєР° СЃР»СѓР¶Р±С‹ iikoCard5POS...
 net stop iikoCard5POS
 timeout /t 15 /nobreak
 
 sc query iikoCard5POS | find "STOPPED" >nul
 if not %errorlevel%==0 (
-    echo Не удалось корректно остановить службу. Принудительное завершение процесса...
+    echo РќРµ СѓРґР°Р»РѕСЃСЊ РєРѕСЂСЂРµРєС‚РЅРѕ РѕСЃС‚Р°РЅРѕРІРёС‚СЊ СЃР»СѓР¶Р±Сѓ. РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ РїСЂРѕС†РµСЃСЃР°...
     taskkill /IM iikoCard5POS.exe /F >nul 2>nul
 )
 
 rem -----------------------------
-rem Очистка старых данных
+rem РћС‡РёСЃС‚РєР° СЃС‚Р°СЂС‹С… РґР°РЅРЅС‹С…
 rem -----------------------------
-echo Удаление старых данных iikoCard5...
+echo РЈРґР°Р»РµРЅРёРµ СЃС‚Р°СЂС‹С… РґР°РЅРЅС‹С… iikoCard5...
 rmdir /s /q "C:\Users\iikoCard5POS\AppData\Roaming\iiko\iikoCard5"
 rmdir /s /q "C:\Windows\ServiceProfiles\iikoCard5POS\AppData\Roaming\iiko\iikoCard5"
 
 rem -----------------------------
-rem Удаление старого установщика
+rem РЈРґР°Р»РµРЅРёРµ СЃС‚Р°СЂРѕРіРѕ СѓСЃС‚Р°РЅРѕРІС‰РёРєР°
 rem -----------------------------
 if exist "%INSTALLER_PATH%" (
-    echo Старый установщик найден — удаляю...
+    echo РЎС‚Р°СЂС‹Р№ СѓСЃС‚Р°РЅРѕРІС‰РёРє РЅР°Р№РґРµРЅ вЂ” СѓРґР°Р»СЏСЋ...
     del /f /q "%INSTALLER_PATH%"
 )
 
 rem ===============================
-rem Отключаем Firewall и Defender
+rem РћС‚РєР»СЋС‡Р°РµРј Firewall Рё Defender
 rem ===============================
-echo Отключаем Windows Firewall...
+echo РћС‚РєР»СЋС‡Р°РµРј Windows Firewall...
 netsh advfirewall set allprofiles state off
 
-echo Отключаем Защиту в реальном времени Windows Defender...
+echo РћС‚РєР»СЋС‡Р°РµРј Р—Р°С‰РёС‚Сѓ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё Windows Defender...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "Set-MpPreference -DisableRealtimeMonitoring $true"
 
 rem -----------------------------
-rem Скачивание нового установщика
+rem РЎРєР°С‡РёРІР°РЅРёРµ РЅРѕРІРѕРіРѕ СѓСЃС‚Р°РЅРѕРІС‰РёРєР°
 rem -----------------------------
-echo Скачивание установщика iikoCardPOS...
+echo РЎРєР°С‡РёРІР°РЅРёРµ СѓСЃС‚Р°РЅРѕРІС‰РёРєР° iikoCardPOS...
 curl -L -o "%INSTALLER_PATH%" "%DOWNLOAD_URL%"
 if not exist "%INSTALLER_PATH%" (
-    echo Ошибка: не удалось скачать файл. Проверьте интернет-соединение.
+    echo РћС€РёР±РєР°: РЅРµ СѓРґР°Р»РѕСЃСЊ СЃРєР°С‡Р°С‚СЊ С„Р°Р№Р». РџСЂРѕРІРµСЂСЊС‚Рµ РёРЅС‚РµСЂРЅРµС‚-СЃРѕРµРґРёРЅРµРЅРёРµ.
     exit /b
 )
-echo Установщик успешно скачан: %INSTALLER_PATH%
+echo РЈСЃС‚Р°РЅРѕРІС‰РёРє СѓСЃРїРµС€РЅРѕ СЃРєР°С‡Р°РЅ: %INSTALLER_PATH%
 
 rem -----------------------------
-rem Установка (тихий режим)
+rem РЈСЃС‚Р°РЅРѕРІРєР° (С‚РёС…РёР№ СЂРµР¶РёРј)
 rem -----------------------------
-echo Запуск установки iikoCardPOS...
+echo Р—Р°РїСѓСЃРє СѓСЃС‚Р°РЅРѕРІРєРё iikoCardPOS...
 powershell -Command Start-Process '%INSTALLER_PATH%' -ArgumentList '/S' -Verb RunAs
 
 rem -----------------------------
-rem Ожидание завершения установки
+rem РћР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ СѓСЃС‚Р°РЅРѕРІРєРё
 rem -----------------------------
-echo Ожидание завершения установки...
+echo РћР¶РёРґР°РЅРёРµ Р·Р°РІРµСЂС€РµРЅРёСЏ СѓСЃС‚Р°РЅРѕРІРєРё...
 set "install_wait_time=0"
 :INSTALL_WAIT
 timeout /t 30 /nobreak
@@ -131,7 +131,7 @@ set /a install_wait_time+=30
 if exist "C:\Windows\ServiceProfiles\iikoCard5POS\AppData\Roaming\iiko\iikoCard5" (
     dir "C:\Windows\ServiceProfiles\iikoCard5POS\AppData\Roaming\iiko\iikoCard5" >nul 2>nul
     if %errorlevel%==0 (
-        echo Установка завершена успешно.
+        echo РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РІРµСЂС€РµРЅР° СѓСЃРїРµС€РЅРѕ.
         goto INSTALL_DONE
     )
 )
@@ -139,27 +139,27 @@ if exist "C:\Windows\ServiceProfiles\iikoCard5POS\AppData\Roaming\iiko\iikoCard5
 if exist "C:\Users\iikoCard5POS\AppData\Roaming\iiko\iikoCard5" (
     dir "C:\Users\iikoCard5POS\AppData\Roaming\iiko\iikoCard5" >nul 2>nul
     if %errorlevel%==0 (
-        echo Установка завершена успешно.
+        echo РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РІРµСЂС€РµРЅР° СѓСЃРїРµС€РЅРѕ.
         goto INSTALL_DONE
     )
 )
 
 if %install_wait_time% GEQ 1200 (
-    echo Ошибка: установка не завершилась за 20 минут. Завершение работы.
+    echo РћС€РёР±РєР°: СѓСЃС‚Р°РЅРѕРІРєР° РЅРµ Р·Р°РІРµСЂС€РёР»Р°СЃСЊ Р·Р° 20 РјРёРЅСѓС‚. Р—Р°РІРµСЂС€РµРЅРёРµ СЂР°Р±РѕС‚С‹.
     exit /b
 )
 goto INSTALL_WAIT
 
 :INSTALL_DONE
-echo Установка завершена успешно.
+echo РЈСЃС‚Р°РЅРѕРІРєР° Р·Р°РІРµСЂС€РµРЅР° СѓСЃРїРµС€РЅРѕ.
 
 rem ===============================
-rem Включаем Firewall и Defender обратно
+rem Р’РєР»СЋС‡Р°РµРј Firewall Рё Defender РѕР±СЂР°С‚РЅРѕ
 rem ===============================
-echo Включаем Windows Firewall...
+echo Р’РєР»СЋС‡Р°РµРј Windows Firewall...
 netsh advfirewall set allprofiles state on
 
-echo Включаем защиту в реальном времени Windows Defender...
+echo Р’РєР»СЋС‡Р°РµРј Р·Р°С‰РёС‚Сѓ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё Windows Defender...
 powershell -Command "Set-MpPreference -DisableRealtimeMonitoring $false"
 
 timeout /t 20 /nobreak
