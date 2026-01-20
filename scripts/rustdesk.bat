@@ -1,5 +1,5 @@
 @echo off
-chcp 1251 >nul
+chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 REM ===============================
@@ -69,7 +69,7 @@ if %errorlevel% equ 0 (
 REM --- fallback через браузер ---
 if not exist "%TMP_EXE%" (
     echo.
-    echo Не удалось скачать автоматически.
+    echo ❌ Не удалось скачать автоматически.
     echo Открываю страницу загрузки.
     explorer "%DL_URL%"
 
@@ -130,7 +130,7 @@ powershell -NoProfile -Command "Unblock-File -Path '%EXE%'"
 goto EXE_DONE
 
 :EXE_FAIL
-echo rustdesk.exe не появился за 60 секунд
+echo ❌ rustdesk.exe не появился за 60 секунд
 echo Установка, вероятно, не завершилась корректно.
 pause
 exit /b 2
