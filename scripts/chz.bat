@@ -3,51 +3,51 @@ chcp 65001 >nul
 setlocal enabledelayedexpansion
 
 :: ===============================
-:: ÐŸÐ°Ñ€Ð°Ð¼ÐµÑ‚Ñ€Ñ‹
+:: Ïàðàìåòðû
 :: ===============================
 set "FRAMEWORK_URL=https://go.microsoft.com/fwlink/?LinkId=2088631"
 set "FRAMEWORK_FILE=%TEMP%\ndp48-x86-x64-allos-enu.exe"
 
-set "MSI_URL=https://Ñ‡ÐµÑÑ‚Ð½Ñ‹Ð¹Ð·Ð½Ð°Ðº.Ñ€Ñ„/upload/regime-1.5.1-523.msi"
+set "MSI_URL=https://÷åñòíûéçíàê.ðô/upload/regime-1.5.1-523.msi"
 set "MSI_FILE=regime.msi"
 
 :: ===============================
-:: Ð£Ð´Ð°Ð»ÐµÐ½Ð¸Ðµ ÑÑ‚Ð°Ñ€Ð¾Ð¹ Ð²ÐµÑ€ÑÐ¸Ð¸
+:: Óäàëåíèå ñòàðîé âåðñèè
 :: ===============================
-echo ÐŸÑ€Ð¾Ð²ÐµÑ€ÑÐµÐ¼ Ð½Ð°Ð»Ð¸Ñ‡Ð¸Ðµ ÑÑ‚Ð°Ñ€Ð¾Ð¹ Ð²ÐµÑ€ÑÐ¸Ð¸ Ð§ÐµÑÑ‚Ð½Ð¾Ð³Ð¾ Ð—ÐÐÐš Ð¼Ð¾Ð´ÑƒÐ»Ñ...
+echo Ïðîâåðÿåì íàëè÷èå ñòàðîé âåðñèè ×åñòíîãî ÇÍÀÊ ìîäóëÿ...
 
 set "OLD_PRODUCT_CODE="
 
-:: ÐŸÐ¾Ð¸ÑÐº Ð² Ð¾Ð±Ñ‹Ñ‡Ð½Ð¾Ð¼ Ñ€ÐµÐµÑÑ‚Ñ€Ðµ
+:: Ïîèñê â îáû÷íîì ðååñòðå
 for /f "tokens=2 delims={}" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "regime" ^| findstr /i "{"') do (
     if not defined OLD_PRODUCT_CODE set "OLD_PRODUCT_CODE={%%A}"
 )
 
-:: ÐŸÐ¾Ð¸ÑÐº Ð² WOW6432Node
+:: Ïîèñê â WOW6432Node
 for /f "tokens=2 delims={}" %%A in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "regime" ^| findstr /i "{"') do (
     if not defined OLD_PRODUCT_CODE set "OLD_PRODUCT_CODE={%%A}"
 )
 
 if defined OLD_PRODUCT_CODE (
-    echo ÐÐ°Ð¹Ð´ÐµÐ½Ð° ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð½Ð°Ñ ÑÑ‚Ð°Ñ€Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ: %OLD_PRODUCT_CODE%
-    echo Ð£Ð´Ð°Ð»ÑÐµÐ¼ ÑÑ‚Ð°Ñ€Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ...
+    echo Íàéäåíà óñòàíîâëåííàÿ ñòàðàÿ âåðñèÿ: %OLD_PRODUCT_CODE%
+    echo Óäàëÿåì ñòàðûé ìîäóëü...
     msiexec /x %OLD_PRODUCT_CODE% /qn /norestart
-    echo Ð¡Ñ‚Ð°Ñ€Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ ÑƒÐ´Ð°Ð»Ñ‘Ð½.
+    echo Ñòàðûé ìîäóëü óäàë¸í.
 ) else (
-    echo Ð¡Ñ‚Ð°Ñ€Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°.
+    echo Ñòàðàÿ âåðñèÿ íå íàéäåíà.
 )
 
 :: ===============================
-:: Ð’Ñ‹ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Firewall Ð¸ Defender
+:: Âûêëþ÷àåì Firewall è Defender
 :: ===============================
-echo ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Windows Firewall...
+echo Îòêëþ÷àåì Windows Firewall...
 netsh advfirewall set allprofiles state off >nul 2>&1
 
-echo ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð—Ð°Ñ‰Ð¸Ñ‚Ñƒ Ð² Ñ€ÐµÐ°Ð»ÑŒÐ½Ð¾Ð¼ Ð²Ñ€ÐµÐ¼ÐµÐ½Ð¸ Windows Defender...
+echo Îòêëþ÷àåì Çàùèòó â ðåàëüíîì âðåìåíè Windows Defender...
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
 :: ===============================
-:: ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° .NET Framework 4.8
+:: Ïðîâåðêà .NET Framework 4.8
 :: ===============================
 set "RegKey=HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
 set "VersionValue=Release"
@@ -55,103 +55,103 @@ set "VersionValue=Release"
 for /f "tokens=3" %%A in ('reg query "%RegKey%" /v "%VersionValue%" 2^>nul') do set Release=%%A
 
 if not defined Release (
-    echo .NET Framework 4.8 Ð½Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½. Ð—Ð°Ð¿ÑƒÑÐºÐ°ÐµÐ¼ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÑƒ...
+    echo .NET Framework 4.8 íå óñòàíîâëåí. Çàïóñêàåì óñòàíîâêó...
     goto InstallFramework
 )
 
 if %Release% GEQ 528040 (
-    echo .NET Framework 4.8 ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½.
+    echo .NET Framework 4.8 óñòàíîâëåí.
     goto MSIInstall
 ) else (
-    echo Ð£ÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð° Ð²ÐµÑ€ÑÐ¸Ñ Ð½Ð¸Ð¶Ðµ 4.8: Release=%Release%. Ð—Ð°Ð¿ÑƒÑÐºÐ°ÐµÐ¼ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÑƒ...
+    echo Óñòàíîâëåíà âåðñèÿ íèæå 4.8: Release=%Release%. Çàïóñêàåì óñòàíîâêó...
     goto InstallFramework
 )
 
 :: ===============================
-:: Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° .NET Framework 4.8
+:: Óñòàíîâêà .NET Framework 4.8
 :: ===============================
 :InstallFramework
 if not exist "%FRAMEWORK_FILE%" (
-    echo Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ .NET Framework 4.8...
+    echo Ñêà÷èâàíèå .NET Framework 4.8...
     curl -L -o "%FRAMEWORK_FILE%" "%FRAMEWORK_URL%" --retry 3 --progress-bar
     if errorlevel 1 (
-        echo ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ñ Framework!
+        echo Îøèáêà ñêà÷èâàíèÿ Framework!
         pause
         exit /b 1
     )
 )
 
-echo Ð—Ð°Ð¿ÑƒÑÐº ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ .NET Framework 4.8...
+echo Çàïóñê óñòàíîâêè .NET Framework 4.8...
 "%FRAMEWORK_FILE%" /qb /norestart /log "%~dp0framework_install_log.txt"
 set FRAMEWORK_RESULT=%ERRORLEVEL%
 
 if %FRAMEWORK_RESULT%==0 (
-    echo .NET Framework ÑƒÑÐ¿ÐµÑˆÐ½Ð¾ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½.
+    echo .NET Framework óñïåøíî óñòàíîâëåí.
 ) else if %FRAMEWORK_RESULT%==3010 (
-    echo Ð¢Ñ€ÐµÐ±ÑƒÐµÑ‚ÑÑ Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð´Ð»Ñ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¸Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Framework.
+    echo Òðåáóåòñÿ ïåðåçàãðóçêà äëÿ çàâåðøåíèÿ óñòàíîâêè Framework.
     shutdown /r /t 5
     exit
 ) else if %FRAMEWORK_RESULT%==2350 (
-    echo Ð¢Ñ€ÐµÐ±ÑƒÐµÑ‚ÑÑ Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ° Ð´Ð»Ñ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð¸Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Framework.
+    echo Òðåáóåòñÿ ïåðåçàãðóçêà äëÿ çàâåðøåíèÿ óñòàíîâêè Framework.
     shutdown /r /t 5
     exit
 ) else (
-    echo ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ Framework! ÐšÐ¾Ð´: %FRAMEWORK_RESULT%
+    echo Îøèáêà óñòàíîâêè Framework! Êîä: %FRAMEWORK_RESULT%
     pause
     exit /b 1
 )
 
 :: ===============================
-:: Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° MSI
+:: Óñòàíîâêà MSI
 :: ===============================
 :MSIInstall
 echo ================================
-echo Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ Ð›Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ð³Ð¾ Ð¼Ð¾Ð´ÑƒÐ»Ñ Ð§Ð—...
+echo Ñêà÷èâàíèå Ëîêàëüíîãî ìîäóëÿ ×Ç...
 echo ================================
 curl -L -o "%MSI_FILE%" "%MSI_URL%" --retry 3 --progress-bar
 if errorlevel 1 (
-    echo ÐžÑˆÐ¸Ð±ÐºÐ° ÑÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ñ Ð§Ð—!
+    echo Îøèáêà ñêà÷èâàíèÿ ×Ç!
     pause
     exit /b 1
 )
 
 echo ================================
-echo Ð—Ð°Ð¿ÑƒÑÐº ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ "Ð›Ð¾ÐºÐ°Ð»ÑŒÐ½Ð¾Ð³Ð¾ Ð¼Ð¾Ð´ÑƒÐ»Ñ Ð§Ð—"...
+echo Çàïóñê óñòàíîâêè "Ëîêàëüíîãî ìîäóëÿ ×Ç"...
 echo ================================
 msiexec /i "%MSI_FILE%" /qf /norestart
 set MSI_CODE=%ERRORLEVEL%
 
-echo ÐšÐ¾Ð´ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ MSI: %MSI_CODE%
+echo Êîä óñòàíîâêè MSI: %MSI_CODE%
 
 if "%MSI_CODE%"=="0" (
-    echo Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð° ÑƒÑÐ¿ÐµÑˆÐ½Ð¾.
+    echo Óñòàíîâêà çàâåðøåíà óñïåøíî.
     goto AfterMSI
 )
 
 if "%MSI_CODE%"=="3010" (
-    echo MSI ÑÐ¾Ð¾Ð±Ñ‰Ð¸Ð» Ð¾ Ð½ÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼Ð¾ÑÑ‚Ð¸ Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ¸, Ð½Ð¾ Ð¿Ñ€Ð¾Ð´Ð¾Ð»Ð¶Ð°ÐµÐ¼.
+    echo MSI ñîîáùèë î íåîáõîäèìîñòè ïåðåçàãðóçêè, íî ïðîäîëæàåì.
     goto AfterMSI
 )
 
 if "%MSI_CODE%"=="-2147021886" (
-    echo MSI ÑÐ¾Ð¾Ð±Ñ‰Ð¸Ð» ÐºÐ¾Ð´ 0x80070BC2 (Ð½ÑƒÐ¶Ð½Ð° Ð¿ÐµÑ€ÐµÐ·Ð°Ð³Ñ€ÑƒÐ·ÐºÐ°). ÐŸÑ€Ð¾Ð´Ð¾Ð»Ð¶Ð°ÐµÐ¼.
+    echo MSI ñîîáùèë êîä 0x80070BC2 (íóæíà ïåðåçàãðóçêà). Ïðîäîëæàåì.
     goto AfterMSI
 )
 
-echo ÐžÑˆÐ¸Ð±ÐºÐ° ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸ MSI! ÐšÐ¾Ð´: %MSI_CODE%
+echo Îøèáêà óñòàíîâêè MSI! Êîä: %MSI_CODE%
 pause
 exit /b 1
 
 :AfterMSI
 
 :: ===============================
-:: Ð’ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Ð·Ð°Ñ‰Ð¸Ñ‚Ñƒ
+:: Âêëþ÷àåì çàùèòó
 :: ===============================
 netsh advfirewall set allprofiles state on >nul 2>&1
 powershell -Command "Set-MpPreference -DisableRealtimeMonitoring $false" >nul 2>&1
 
-echo Ð’ÑÐµ Ð¾Ð¿ÐµÑ€Ð°Ñ†Ð¸Ð¸ Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ñ‹.
+echo Âñå îïåðàöèè çàâåðøåíû.
 
-echo Ð—Ð°ÐºÑ€Ñ‹Ñ‚Ð¸Ðµ Ñ‡ÐµÑ€ÐµÐ· 10 ÑÐµÐºÑƒÐ½Ð´...
+echo Çàêðûòèå ÷åðåç 10 ñåêóíä...
 timeout /t 10 /nobreak >nul
 exit
