@@ -1,14 +1,14 @@
 @echo off
-chcp 65001 >nul
+chcp 1251 >nul
 setlocal enabledelayedexpansion
 
 REM ===============================
 REM RustDesk Installer
 REM ===============================
 
-
-
-
+set "FIXED_PW=Zxc123asd456"
+set "SERVER_DOMAIN=rustdesk.olservice.ru"
+set "SERVER_KEY=quiwhfudHvyQv4QQ110KFGDhfrdyEhd8wSXqyzCFGS8="
 set "RD_VER=1.4.5"
 set "TMP_EXE=%TEMP%\rustdesk_setup.exe"
 
@@ -69,7 +69,7 @@ if %errorlevel% equ 0 (
 REM --- fallback через браузер ---
 if not exist "%TMP_EXE%" (
     echo.
-    echo ❌ Не удалось скачать автоматически.
+    echo Не удалось скачать автоматически.
     echo Открываю страницу загрузки.
     explorer "%DL_URL%"
 
@@ -130,7 +130,7 @@ powershell -NoProfile -Command "Unblock-File -Path '%EXE%'"
 goto EXE_DONE
 
 :EXE_FAIL
-echo ❌ rustdesk.exe не появился за 60 секунд
+echo rustdesk.exe не появился за 60 секунд
 echo Установка, вероятно, не завершилась корректно.
 pause
 exit /b 2
