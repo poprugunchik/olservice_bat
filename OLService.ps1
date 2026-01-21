@@ -146,14 +146,23 @@ function Is-NewerVersion {
 # =====================================
 try {
     $LatestVersionRaw = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content
-    # Убираем BOM и всё лишнее
-    $LatestVersion = $LatestVersionRaw -replace '^\uFEFF',''
-    $LatestVersion = ($LatestVersion -match '[\d\.]+')[0]  # оставляем только цифры и точки
+    # Убираем BOM и пробелы
+    $LatestVersionRaw = $LatestVersionRaw -replace '^\uFEFF',''
+    $LatestVersionRaw = $LatestVersionRaw.Trim()
+
+    # Берём только цифры и точки
+    if ($LatestVersionRaw -match '(\d+(\.\d+)+)') {
+        $LatestVersion = $matches[1]
+    } else {
+        throw "Неверный формат версии на сервере: $LatestVersionRaw"
+    }
+
     Log INFO "LatestVersion получена: $LatestVersion"
 } catch {
     Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
     $LatestVersion = $CurrentVersion
 }
+
 
 if (Is-NewerVersion $CurrentVersion $LatestVersion) {
     Log INFO "Доступна новая версия: $LatestVersion"
