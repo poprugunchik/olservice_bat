@@ -190,63 +190,51 @@ if (-not (Is-Admin)) {
 Log INFO "Запущен с правами администратора"
 
 # =====================================
-# ОБНОВЛЕНИЕ EXE
+# UPDATER MODE
 # =====================================
-try {
-    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content.Trim()
-    Log INFO "LatestVersion: $LatestVersion"
-} catch {
-    Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
-    $LatestVersion = $CurrentVersion
-}
+if ($UpdateTarget) {
+    Log INFO "Updater mode. Target: $UpdateTarget"
 
-if (Is-NewerVersion $CurrentVersion $LatestVersion) {
-    Log INFO "Доступна новая версия: $LatestVersion, текущая: $CurrentVersion"
-
-    $update = [System.Windows.Forms.MessageBox]::Show(
-        "Доступна новая версия ($LatestVersion). Обновить сейчас?",
-        "Обновление",
-        [System.Windows.Forms.MessageBoxButtons]::YesNo,
-        [System.Windows.Forms.MessageBoxIcon]::Information
-    )
-
-    if ($update -eq [System.Windows.Forms.DialogResult]::Yes) {
-        try {
-            Log INFO "Скачиваем новую версию exe..."
-            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri $ExeUrl -OutFile $TempExe
-            Log INFO "Скачивание завершено: $TempExe"
-
-            if (!(Test-Path $TempExe)) {
-                throw "TempExe не найден после скачивания"
-            }
-
-            Log INFO "Запускаем updater"
-            Start-Process -FilePath $TempExe `
-				-ArgumentList "-UpdateTarget `"$LocalExe`"" `
-				-Verb RunAs
-
-
-            exit   # ⬅️ ОБЯЗАТЕЛЬНО
-        } catch {
-            Log ERROR "Ошибка обновления exe: $($_.Exception.Message)"
-            [System.Windows.Forms.MessageBox]::Show(
-                "Не удалось обновить exe: $($_.Exception.Message)",
-                "Ошибка",
-                [System.Windows.Forms.MessageBoxButtons]::OK,
-                [System.Windows.Forms.MessageBoxIcon]::Error
-            )
-            exit
-        }
-    } else {
-        Log INFO "Пользователь отказался обновлять exe"
+    # Завершаем процесс OLService.exe, если он открыт
+    $proc = Get-Process -Name "OLService" -ErrorAction SilentlyContinue
+    if ($proc) {
+        Log INFO "Закрываем старый процесс OLService.exe"
+        $proc | Stop-Process -Force
+        Start-Sleep -Seconds 1
     }
-} else {
-    Log INFO "Обновление не требуется, текущая версия актуальна"
+
+    $replaced = $false
+
+    for ($i = 0; $i -lt 10; $i++) {
+        try {
+            Copy-Item -Path $PSCommandPath -Destination $UpdateTarget -Force
+            Log INFO "Exe successfully replaced"
+            $replaced = $true
+            break
+        } catch {
+            Log WARN "File is locked, waiting..."
+            Start-Sleep -Seconds 1
+        }
+    }
+
+    if (-not $replaced) {
+        Log ERROR "Не удалось заменить exe после 10 попыток"
+        [System.Windows.Forms.MessageBox]::Show(
+            "Не удалось заменить OLService.exe после 10 попыток.",
+            "Ошибка обновления",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        )
+        exit
+    }
+
+    Log INFO "Запускаем новую версию"
+    Start-Process -FilePath $UpdateTarget -Verb RunAs
+    exit
 }
 
 
-# =====================================
+================================
 # ФОРМА ПАРОЛЯ
 # =====================================
 function Prompt-Password {
