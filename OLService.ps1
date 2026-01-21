@@ -39,14 +39,22 @@ Log INFO "TempExe: $TempExe"
 Log INFO "ScriptRoot: $ScriptRoot"
 
 # =====================================
-# Текущая версия
+# Текущая версия из EXE
 # =====================================
-$VersionFile = Join-Path $ScriptRoot "version.txt"
-$CurrentVersion = if (Test-Path $VersionFile) { (Get-Content $VersionFile -Raw).Trim() } else { "1.0.0" }
+$LocalExe = Join-Path $Desktop "OLService.exe"
+
+if (Test-Path $LocalExe) {
+    $CurrentVersion = (Get-Item $LocalExe).VersionInfo.ProductVersion
+} else {
+    $CurrentVersion = "1.0"  # дефолт, если exe нет
+}
+
+Log INFO "CurrentVersion (from exe properties): $CurrentVersion"
+
 
 # GitHub ссылки
 $VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
-$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/OLService.exe"
+$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/dist/OLService.exe"
 
 # =====================================
 # ФУНКЦИЯ СРАВНЕНИЯ ВЕРСИЙ
