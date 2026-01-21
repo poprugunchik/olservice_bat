@@ -103,28 +103,29 @@ Log INFO "Запущен с правами администратора"
 # ===========================
 if ($UpdateTarget) {
     Log INFO "Updater mode. Target: $UpdateTarget"
-    Start-Sleep -Seconds 2
 
-    $replaced = $false
-    for ($i = 0; $i -lt 10; $i++) {
-        try {
-            Copy-Item -Path $PSCommandPath -Destination $UpdateTarget -Force
-            Log INFO "Exe successfully replaced"
-            $replaced = $true
-            break
-        } catch {
-            Log WARN "File is locked, waiting..."
-            Start-Sleep -Seconds 1
-        }
+    # Запускаем отдельный процесс PowerShell, который подождёт пока текущий exe завершится
+    $script = @"
+Start-Sleep -Seconds 2
+\$replaced = \$false
+for (\$i = 0; \$i -lt 10; \$i++) {
+    try {
+        Copy-Item -Path `"$PSCommandPath`" -Destination `"$UpdateTarget`" -Force
+        Write-Host 'Exe successfully replaced'
+        \$replaced = \$true
+        break
+    } catch {
+        Start-Sleep -Seconds 1
     }
+}
+if (-not \$replaced) { Write-Host 'Failed to replace exe' }
+Start-Process -FilePath `"$UpdateTarget`"
+"@
 
-    if (-not $replaced) {
-        Log ERROR "Не удалось заменить exe после 10 попыток"
-        exit
-    }
-
-    Log INFO "Запускаем новую версию"
-    Start-Process -FilePath $UpdateTarget -Verb RunAs
+    # Сохраняем скрипт временно и запускаем в новом PowerShell
+    $TempUpdater = Join-Path $env:TEMP "olservice_updater.ps1"
+    $script | Set-Content -Path $TempUpdater -Encoding UTF8
+    Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$TempUpdater`"" -WindowStyle Hidden
     exit
 }
 
