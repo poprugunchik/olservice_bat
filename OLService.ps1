@@ -1,12 +1,7 @@
-﻿param(
-    [string]$UpdateTarget
-)
-
+﻿param([string]$UpdateTarget)
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
-
-
 
 # =====================================
 # ПОЛНОЕ ЛОГИРОВАНИЕ С САМОГО НАЧАЛА
@@ -26,98 +21,42 @@ function Log {
 
 Log INFO "=== Запуск OLService ==="
 
-
-# =====================================
-# UPDATER MODE
-# =====================================
-if ($UpdateTarget) {
-    Log INFO "Updater mode. Target: $UpdateTarget"
-
-    Start-Sleep -Seconds 2
-
-    $replaced = $false
-
-	for ($i = 0; $i -lt 10; $i++) {
-		try {
-			Copy-Item -Path $PSCommandPath -Destination $UpdateTarget -Force
-			Log INFO "Exe successfully replaced"
-			$replaced = $true
-			break
-		} catch {
-			Log WARN "File is locked, waiting..."
-			Start-Sleep -Seconds 1
-		}
-	}
-
-	if (-not $replaced) {
-		Log ERROR "Не удалось заменить exe после 10 попыток"
-		exit
-	}
-
-	Start-Process -FilePath $UpdateTarget -Verb RunAs
-	exit
-}
-
 # =====================================
 # БЕЗОПАСНОЕ ОПРЕДЕЛЕНИЕ ПУТЕЙ
 # =====================================
-# TEMP
-if ($env:TEMP) { $TempDir = $env:TEMP } else { $TempDir = [System.IO.Path]::GetTempPath() }
+$TempDir = if ($env:TEMP) { $env:TEMP } else { [System.IO.Path]::GetTempPath() }
 if (!(Test-Path $TempDir)) { New-Item -ItemType Directory -Path $TempDir | Out-Null }
 Log INFO "TempDir: $TempDir"
 
-# USERPROFILE / Desktop
-if ($env:USERPROFILE) { $UserDir = $env:USERPROFILE } else {
-    try { $UserDir = [Environment]::GetFolderPath("Desktop") } catch { $UserDir = $TempDir }
-}
-Log INFO "UserDir: $UserDir"
-
-# Пути
 $Desktop = [Environment]::GetFolderPath("Desktop")
+$UserDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $Desktop }
 $LocalExe = Join-Path $Desktop "OLService.exe"
 $TempExe  = Join-Path $TempDir "OLService_new.exe"
-if ($PSScriptRoot) { $ScriptRoot = $PSScriptRoot } else { $ScriptRoot = $TempDir }
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { $TempDir }
 
 Log INFO "LocalExe: $LocalExe"
 Log INFO "TempExe: $TempExe"
 Log INFO "ScriptRoot: $ScriptRoot"
 
 # =====================================
-# Текущая версия из EXE
+# Текущая версия
 # =====================================
-$LocalExe = Join-Path $Desktop "OLService.exe"
-
-if (Test-Path $LocalExe) {
-    $CurrentVersion = (Get-Item $LocalExe).VersionInfo.ProductVersion
-} else {
-    $CurrentVersion = "1.0"  # дефолт, если exe нет
-}
-
-Log INFO "CurrentVersion (from exe properties): $CurrentVersion"
-
+$VersionFile = Join-Path $ScriptRoot "version.txt"
+$CurrentVersion = if (Test-Path $VersionFile) { (Get-Content $VersionFile -Raw).Trim() } else { "1.0.0" }
 
 # GitHub ссылки
 $VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
-$ExeUrl = "https://github.com/poprugunchik/olservice_bat/raw/main/dist/OLService.exe"
+$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/OLService.exe"
 
 # =====================================
-# ФУНКЦИЯ ПРОВЕРКИ ВЕРСИИ С ЛОГОМ
+# ФУНКЦИЯ СРАВНЕНИЯ ВЕРСИЙ
 # =====================================
 function Is-NewerVersion {
-    param (
-        [string]$current,
-        [string]$latest
-    )
-
+    param ([string]$current, [string]$latest)
     Log INFO "Сравниваем версии: current=$current, latest=$latest"
 
-    # Проверка формата
-    if (-not ($current -match '^\d+(\.\d+)*$')) {
-        Log WARN "Неверный формат текущей версии: $current"
-        return $false
-    }
-    if (-not ($latest -match '^\d+(\.\d+)*$')) {
-        Log WARN "Неверный формат версии с сервера: $latest"
+    if (-not ($current -match '^\d+(\.\d+)*$') -or -not ($latest -match '^\d+(\.\d+)*$')) {
+        Log WARN "Неверный формат версии"
         return $false
     }
 
@@ -127,48 +66,12 @@ function Is-NewerVersion {
     for ($i = 0; $i -lt [Math]::Max($cur.Count, $lat.Count); $i++) {
         $c = if ($i -lt $cur.Count) {$cur[$i]} else {0}
         $l = if ($i -lt $lat.Count) {$lat[$i]} else {0}
-        if ($l -gt $c) {
-            Log INFO "Версия сервера новее (latest > current)"
-            return $true
-        }
-        if ($l -lt $c) {
-            Log INFO "Локальная версия новее или серверная версия старше (current > latest)"
-            return $false
-        }
+        if ($l -gt $c) { Log INFO "Версия сервера новее"; return $true }
+        if ($l -lt $c) { Log INFO "Локальная версия новее"; return $false }
     }
 
     Log INFO "Версии равны"
     return $false
-}
-
-# =====================================
-# ПРОВЕРКА ВЕРСИИ С СЕРВЕРА
-# =====================================
-try {
-    $LatestVersionRaw = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content
-    # Убираем BOM и пробелы
-    $LatestVersionRaw = $LatestVersionRaw -replace '^\uFEFF',''
-    $LatestVersionRaw = $LatestVersionRaw.Trim()
-
-    # Берём только цифры и точки
-    if ($LatestVersionRaw -match '(\d+(\.\d+)+)') {
-        $LatestVersion = $matches[1]
-    } else {
-        throw "Неверный формат версии на сервере: $LatestVersionRaw"
-    }
-
-    Log INFO "LatestVersion получена: $LatestVersion"
-} catch {
-    Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
-    $LatestVersion = $CurrentVersion
-}
-
-
-if (Is-NewerVersion $CurrentVersion $LatestVersion) {
-    Log INFO "Доступна новая версия: $LatestVersion"
-    # Здесь можно запускать логику обновления
-} else {
-    Log INFO "Обновление не требуется. Текущая версия: $CurrentVersion, серверная версия: $LatestVersion"
 }
 
 # =====================================
@@ -177,9 +80,7 @@ if (Is-NewerVersion $CurrentVersion $LatestVersion) {
 function Is-Admin {
     $user = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object Security.Principal.WindowsPrincipal($user)
-    $isAdmin = $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-    Log INFO "IsAdmin: $isAdmin"
-    return $isAdmin
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 if (-not (Is-Admin)) {
@@ -190,21 +91,63 @@ if (-not (Is-Admin)) {
 Log INFO "Запущен с правами администратора"
 
 # =====================================
+# ПРОВЕРКА ВЕРСИИ И ОБНОВЛЕНИЕ
+# =====================================
+try {
+    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content.Trim()
+    Log INFO "LatestVersion получена: $LatestVersion"
+} catch {
+    Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
+    $LatestVersion = $CurrentVersion
+}
+
+if (Is-NewerVersion $CurrentVersion $LatestVersion) {
+    Log INFO "Доступна новая версия: $LatestVersion, текущая: $CurrentVersion"
+
+    $update = [System.Windows.Forms.MessageBox]::Show(
+        "Доступна новая версия ($LatestVersion). Обновить сейчас?",
+        "Обновление",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Information
+    )
+
+    if ($update -eq [System.Windows.Forms.DialogResult]::Yes) {
+        try {
+            Log INFO "Скачиваем новую версию exe..."
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri $ExeUrl -OutFile $TempExe
+            Log INFO "Скачивание завершено: $TempExe"
+
+            if (!(Test-Path $TempExe)) { throw "TempExe не найден после скачивания" }
+
+            Log INFO "Запускаем updater"
+            Start-Process -FilePath $TempExe -ArgumentList @("-UpdateTarget", "$LocalExe") -Verb RunAs
+            exit
+        } catch {
+            Log ERROR "Ошибка обновления exe: $($_.Exception.Message)"
+            [System.Windows.Forms.MessageBox]::Show(
+                "Не удалось обновить exe: $($_.Exception.Message)",
+                "Ошибка",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Error
+            )
+            exit
+        }
+    } else {
+        Log INFO "Пользователь отказался обновлять exe"
+    }
+} else {
+    Log INFO "Обновление не требуется, текущая версия актуальна"
+}
+
+# =====================================
 # UPDATER MODE
 # =====================================
 if ($UpdateTarget) {
     Log INFO "Updater mode. Target: $UpdateTarget"
-
-    # Завершаем процесс OLService.exe, если он открыт
-    $proc = Get-Process -Name "OLService" -ErrorAction SilentlyContinue
-    if ($proc) {
-        Log INFO "Закрываем старый процесс OLService.exe"
-        $proc | Stop-Process -Force
-        Start-Sleep -Seconds 1
-    }
+    Start-Sleep -Seconds 2
 
     $replaced = $false
-
     for ($i = 0; $i -lt 10; $i++) {
         try {
             Copy-Item -Path $PSCommandPath -Destination $UpdateTarget -Force
@@ -219,12 +162,6 @@ if ($UpdateTarget) {
 
     if (-not $replaced) {
         Log ERROR "Не удалось заменить exe после 10 попыток"
-        [System.Windows.Forms.MessageBox]::Show(
-            "Не удалось заменить OLService.exe после 10 попыток.",
-            "Ошибка обновления",
-            [System.Windows.Forms.MessageBoxButtons]::OK,
-            [System.Windows.Forms.MessageBoxIcon]::Error
-        )
         exit
     }
 
@@ -234,7 +171,7 @@ if ($UpdateTarget) {
 }
 
 
-#======================================
+# =====================================
 # ФОРМА ПАРОЛЯ
 # =====================================
 function Prompt-Password {
