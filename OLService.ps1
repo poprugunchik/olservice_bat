@@ -83,11 +83,18 @@ Log INFO "TempExe: $TempExe"
 Log INFO "ScriptRoot: $ScriptRoot"
 
 # =====================================
-# Текущая версия
+# Текущая версия из EXE
 # =====================================
-$VersionFile = Join-Path $ScriptRoot "version.txt"
-$CurrentVersion = if (Test-Path $VersionFile) { (Get-Content $VersionFile -Raw).Trim() } else { "1.7" }
-Log INFO "CurrentVersion: $CurrentVersion"
+$LocalExe = Join-Path $Desktop "OLService.exe"
+
+if (Test-Path $LocalExe) {
+    $CurrentVersion = (Get-Item $LocalExe).VersionInfo.ProductVersion
+} else {
+    $CurrentVersion = "1.0"  # дефолт, если exe нет
+}
+
+Log INFO "CurrentVersion (from exe properties): $CurrentVersion"
+
 
 # GitHub ссылки
 $VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
@@ -138,9 +145,10 @@ function Is-NewerVersion {
 # ПРОВЕРКА ВЕРСИИ С СЕРВЕРА
 # =====================================
 try {
-    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content
-    # Убираем BOM и лишние пробелы
-    $LatestVersion = $LatestVersion.Trim() -replace '^\uFEFF',''
+    $LatestVersionRaw = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content
+    # Убираем BOM и всё лишнее
+    $LatestVersion = $LatestVersionRaw -replace '^\uFEFF',''
+    $LatestVersion = ($LatestVersion -match '[\d\.]+')[0]  # оставляем только цифры и точки
     Log INFO "LatestVersion получена: $LatestVersion"
 } catch {
     Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
