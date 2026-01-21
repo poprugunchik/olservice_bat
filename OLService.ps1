@@ -290,7 +290,8 @@ $list.Items.AddRange(@(
     "iikoCard — Работа с iikocard",
     "Clean — Очистка временных файлов",
     "Framework+chz — установка ЧЗ и фреймворков",
-	"Прошу тебя только не нажимай сюда!"
+	"Прошу тебя только не нажимай сюда!",
+	"OrderCheck - скачивает и запускает OrderCheck"
 ))
 $form.Controls.Add($list)
 
@@ -327,6 +328,7 @@ $run.Add_Click({
         2 { $Script = "clean.bat" }
         3 { $Script = "chz.bat" }
 		4 { $Script = "update_service.exe" }
+		5 { $Script = "ordercheck.bat" }
         default { [System.Windows.Forms.MessageBox]::Show("Выберите действие","Внимание",[System.Windows.Forms.MessageBoxButtons]::OK,[System.Windows.Forms.MessageBoxIcon]::Warning); return }
     }
 
