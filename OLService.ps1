@@ -104,28 +104,32 @@ Log INFO "Запущен с правами администратора"
 if ($UpdateTarget) {
     Log INFO "Updater mode. Target: $UpdateTarget"
 
-    # Запускаем отдельный процесс PowerShell, который подождёт пока текущий exe завершится
-    $script = @"
-Start-Sleep -Seconds 2
-\$replaced = \$false
-for (\$i = 0; \$i -lt 10; \$i++) {
-    try {
-        Copy-Item -Path `"$PSCommandPath`" -Destination `"$UpdateTarget`" -Force
-        Write-Host 'Exe successfully replaced'
-        \$replaced = \$true
-        break
-    } catch {
-        Start-Sleep -Seconds 1
-    }
-}
-if (-not \$replaced) { Write-Host 'Failed to replace exe' }
-Start-Process -FilePath `"$UpdateTarget`"
+    $UpdaterBat = Join-Path $TempDir "updater.bat"
+
+    $batContent = @"
+@echo off
+:wait
+tasklist /FI "IMAGENAME eq OLService.exe" | find /I "OLService.exe" >nul
+if %ERRORLEVEL%==0 (
+    timeout /t 1 >nul
+    goto wait
+)
+REM Удаляем старый exe
+del /F /Q "$LocalExe"
+REM Копируем новый exe с temp
+copy /Y "$TempExe" "$LocalExe"
+REM Запускаем новый exe
+start "" "$LocalExe"
+REM Удаляем временный exe
+del /F /Q "$TempExe"
+REM Удаляем этот bat
+del /F /Q "%~f0"
+exit
 "@
 
-    # Сохраняем скрипт временно и запускаем в новом PowerShell
-    $TempUpdater = Join-Path $env:TEMP "olservice_updater.ps1"
-    $script | Set-Content -Path $TempUpdater -Encoding UTF8
-    Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$TempUpdater`"" -WindowStyle Hidden
+    $batContent | Set-Content -Path $UpdaterBat -Encoding ASCII
+    Log INFO "Запускаем updater батник: $UpdaterBat"
+    Start-Process -FilePath $UpdaterBat -WindowStyle Hidden
     exit
 }
 
