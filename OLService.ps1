@@ -98,7 +98,7 @@ Log INFO "CurrentVersion (from exe properties): $CurrentVersion"
 
 # GitHub ссылки
 $VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
-$ExeUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/dist/olservice.exe"
+$ExeUrl = "https://github.com/poprugunchik/olservice_bat/raw/main/dist/OLService.exe"
 
 # =====================================
 # ФУНКЦИЯ ПРОВЕРКИ ВЕРСИИ С ЛОГОМ
