@@ -91,7 +91,7 @@ Log INFO "CurrentVersion: $CurrentVersion"
 
 # GitHub ссылки
 $VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
-$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/olservice.exe"
+$ExeUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/dist/olservice.exe"
 
 # =====================================
 # ФУНКЦИЯ ПРОВЕРКИ ВЕРСИИ С ЛОГОМ
@@ -138,7 +138,9 @@ function Is-NewerVersion {
 # ПРОВЕРКА ВЕРСИИ С СЕРВЕРА
 # =====================================
 try {
-    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content.Trim()
+    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content
+    # Убираем BOM и лишние пробелы
+    $LatestVersion = $LatestVersion.Trim() -replace '^\uFEFF',''
     Log INFO "LatestVersion получена: $LatestVersion"
 } catch {
     Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
