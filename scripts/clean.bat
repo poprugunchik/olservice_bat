@@ -21,8 +21,19 @@ echo Очистка началась %date% %time% >> %LOG_FILE%
 echo Очистка временных файлов пользователя...
 echo Очистка временных файлов пользователя... >> %LOG_FILE%
 if exist "%temp%\" (
-    del /s /q "%temp%\*.*" >> %LOG_FILE% 2>&1
-    for /d %%x in ("%temp%\*") do rd /s /q "%%x" >> %LOG_FILE% 2>&1
+
+    :: Удаляем файлы, кроме clean.bat
+    for %%F in ("%temp%\*") do (
+        if /I not "%%~nxF"=="clean.bat" (
+            del /f /q "%%F" >> %LOG_FILE% 2>&1
+        )
+    )
+
+    :: Удаляем все папки (в папках clean.bat не бывает)
+    for /d %%D in ("%temp%\*") do (
+        rd /s /q "%%D" >> %LOG_FILE% 2>&1
+    )
+
 ) else (
     echo Папка %temp% не найдена >> %LOG_FILE%
 )
