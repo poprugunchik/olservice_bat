@@ -17,25 +17,25 @@ echo         ПОЛНАЯ ОЧИСТКА СИСТЕМЫ (CP1251)
 echo ==================================================
 echo Очистка началась %date% %time% >> %LOG_FILE%
 
-:: Очистка временных файлов
 echo Очистка временных файлов пользователя...
 echo Очистка временных файлов пользователя... >> %LOG_FILE%
-if exist "%temp%\" (
 
-    :: Удаляем файлы, кроме clean.bat
-    for %%F in ("%temp%\*") do (
-        if /I not "%%~nxF"=="clean.bat" (
-            del /f /q "%%F" >> %LOG_FILE% 2>&1
+:: Удаляем файлы в корне %TEMP%, кроме батника
+for %%F in ("%temp%\*") do (
+    if /I not "%%~nxF"=="clean.bat" (
+        if exist "%%F" (
+            if not "%%~nxF"=="olservice" if not "%%~nxF"=="olservice_debug" (
+                del /f /q "%%F" >> %LOG_FILE% 2>&1 2>nul
+            )
         )
     )
+)
 
-    :: Удаляем все папки (в папках clean.bat не бывает)
-    for /d %%D in ("%temp%\*") do (
-        rd /s /q "%%D" >> %LOG_FILE% 2>&1
+:: Удаляем папки в корне %TEMP%, кроме olservice и olservice_debug
+for /d %%D in ("%temp%\*") do (
+    if /I not "%%~nxD"=="olservice" if not "%%~nxD"=="olservice_debug" (
+        rd /s /q "%%D" >> %LOG_FILE% 2>&1 2>nul
     )
-
-) else (
-    echo Папка %temp% не найдена >> %LOG_FILE%
 )
 
 echo Очистка временных файлов Windows...
