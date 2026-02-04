@@ -1,95 +1,262 @@
-﻿param([string]$UpdateTarget)
-
-# =====================================================
-# TLS FIX — С САМОГО НАЧАЛА
-# =====================================================
-try {
-    [Net.ServicePointManager]::SecurityProtocol =
-        [Net.SecurityProtocolType]::Tls12 `
-        -bor [Net.SecurityProtocolType]::Tls11 `
-        -bor [Net.SecurityProtocolType]::Tls
-} catch {}
+﻿param (
+    [string]$UpdateTarget
+)
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# =====================================================
-# LOGGING
-# =====================================================
-$LogDir = Join-Path ([System.IO.Path]::GetTempPath()) "olservice_debug"
-if (!(Test-Path $LogDir)) { New-Item -ItemType Directory -Path $LogDir | Out-Null }
-$LogFile = Join-Path $LogDir ("debug_{0}.log" -f (Get-Date -Format "yyyyMMdd_HHmmss"))
+# =====================================
+# ПОЛНОЕ ЛОГИРОВАНИЕ С САМОГО НАЧАЛА
+# =====================================
 
-function Log {
-    param([string]$Level,[string]$Message)
-    try {
-        Add-Content $LogFile ("[{0}] [{1}] {2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"),$Level,$Message) -Encoding UTF8
-    } catch {}
+$LogDir = Join-Path ([System.IO.Path]::GetTempPath()) "olservice_debug"
+if (!(Test-Path $LogDir)) {
+    New-Item -ItemType Directory -Path $LogDir | Out-Null
 }
 
-Log INFO "=== OLService started ==="
+$Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
+$LogFile   = Join-Path $LogDir "debug_$Timestamp.log"
 
-# =====================================================
-# PATHS
-# =====================================================
-$TempDir = [System.IO.Path]::GetTempPath()
+function Log {
+    param (
+        [string]$Level,
+        [string]$Message
+    )
+
+    try {
+        $line = "[{0}] [{1}] {2}" -f (Get-Date -Format "yyyy-MM-dd HH:mm:ss"), $Level, $Message
+        Add-Content -Path $LogFile -Value $line -Encoding UTF8
+    } catch {
+    }
+}
+
+Log INFO "=== Запуск OLService ==="
+
+# =====================================
+# БЕЗОПАСНОЕ ОПРЕДЕЛЕНИЕ ПУТЕЙ
+# =====================================
+
+$TempDir = if ($env:TEMP) { $env:TEMP } else { [System.IO.Path]::GetTempPath() }
+if (!(Test-Path $TempDir)) {
+    New-Item -ItemType Directory -Path $TempDir | Out-Null
+}
+
+Log INFO "TempDir: $TempDir"
+
 $Desktop = [Environment]::GetFolderPath("Desktop")
+$UserDir = if ($env:USERPROFILE) { $env:USERPROFILE } else { $Desktop }
+
 $LocalExe = Join-Path $Desktop "OLService.exe"
 $TempExe  = Join-Path $TempDir "OLService_new.exe"
 
-$WorkDir = Join-Path $TempDir "olservice"
-if (!(Test-Path $WorkDir)) { New-Item -ItemType Directory -Path $WorkDir | Out-Null }
+$ScriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { $TempDir }
 
-# =====================================================
-# ADMIN CHECK
-# =====================================================
+Log INFO "LocalExe: $LocalExe"
+Log INFO "TempExe: $TempExe"
+Log INFO "ScriptRoot: $ScriptRoot"
+
+# =====================================
+# ТЕКУЩАЯ ВЕРСИЯ ИЗ EXE
+# =====================================
+
+$LocalExe = Join-Path $Desktop "OLService.exe"
+
+if (Test-Path $LocalExe) {
+    $CurrentVersion = (Get-Item $LocalExe).VersionInfo.ProductVersion
+} else {
+    $CurrentVersion = "1.0"
+}
+
+Log INFO "CurrentVersion (from exe properties): $CurrentVersion"
+
+$VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
+$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/dist/OLService.exe"
+
+# =====================================
+# ФУНКЦИЯ СРАВНЕНИЯ ВЕРСИЙ
+# =====================================
+
+function Is-NewerVersion {
+    param (
+        [string]$current,
+        [string]$latest
+    )
+
+    Log INFO "Сравниваем версии: current=$current, latest=$latest"
+
+    if (
+        -not ($current -match '^\d+(\.\d+)*$') -or
+        -not ($latest  -match '^\d+(\.\d+)*$')
+    ) {
+        Log WARN "Неверный формат версии"
+        return $false
+    }
+
+    $cur = $current.Split(".") | ForEach-Object { [int]$_ }
+    $lat = $latest.Split(".")  | ForEach-Object { [int]$_ }
+
+    for ($i = 0; $i -lt [Math]::Max($cur.Count, $lat.Count); $i++) {
+        $c = if ($i -lt $cur.Count) { $cur[$i] } else { 0 }
+        $l = if ($i -lt $lat.Count) { $lat[$i] } else { 0 }
+
+        if ($l -gt $c) {
+            Log INFO "Версия сервера новее"
+            return $true
+        }
+
+        if ($l -lt $c) {
+            Log INFO "Локальная версия новее"
+            return $false
+        }
+    }
+
+    Log INFO "Версии равны"
+    return $false
+}
+
+# =====================================
+# ПРОВЕРКА ADMIN
+# =====================================
+
 function Is-Admin {
-    $id = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $p  = New-Object Security.Principal.WindowsPrincipal($id)
-    return $p.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    $user      = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($user)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
 if (-not (Is-Admin)) {
-    Log WARN "Restart as admin"
-    Start-Process powershell "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+    Log WARN "Не админ, перезапуск с правами администратора"
+    Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
     exit
 }
 
-# =====================================================
-# UPDATER MODE (БЕЗ ПАРОЛЯ И GUI)
-# =====================================================
+Log INFO "Запущен с правами администратора"
+
+# =====================================
+# UPDATER MODE
+# =====================================
+
 if ($UpdateTarget) {
-    Log INFO "Updater mode"
+
+    Log INFO "Updater mode. Target: $UpdateTarget"
 
     $UpdaterBat = Join-Path $TempDir "updater.bat"
 
-@"
+    $batContent = @"
 @echo off
 :wait
-tasklist | find "OLService.exe" >nul
+tasklist /FI "IMAGENAME eq OLService.exe" | find /I "OLService.exe" >nul
 if %ERRORLEVEL%==0 (
-  timeout /t 1 >nul
-  goto wait
+    timeout /t 1 >nul
+    goto wait
 )
-del /F /Q "$UpdateTarget"
-copy /Y "$TempExe" "$UpdateTarget"
-start "" "$UpdateTarget"
+
+del /F /Q "$LocalExe"
+copy /Y "$TempExe" "$LocalExe"
+start "" "$LocalExe"
 del /F /Q "$TempExe"
 del /F /Q "%~f0"
-"@ | Set-Content $UpdaterBat -Encoding ASCII
+exit
+"@
 
-    Start-Process $UpdaterBat -WindowStyle Hidden
+    $batContent | Set-Content -Path $UpdaterBat -Encoding ASCII
+
+    Log INFO "Запускаем updater батник: $UpdaterBat"
+    Start-Process -FilePath $UpdaterBat -WindowStyle Hidden
     exit
 }
 
-# =====================================================
-# PASSWORD PROMPT WITH LAYOUT INDICATOR
-# =====================================================
-$CorrectPassword = "zxc123asd456"
+# =====================================
+# ПРОВЕРКА ВЕРСИИ И ОБНОВЛЕНИЕ
+# =====================================
+
+try {
+    $LatestVersion = (Invoke-WebRequest -Uri $VersionUrl -UseBasicParsing).Content.Trim()
+    Log INFO "LatestVersion получена: $LatestVersion"
+} catch {
+    Log ERROR "Не удалось получить версию с GitHub: $($_.Exception.Message)"
+    $LatestVersion = $CurrentVersion
+}
+
+if (Is-NewerVersion $CurrentVersion $LatestVersion) {
+
+    Log INFO "Доступна новая версия: $LatestVersion, текущая: $CurrentVersion"
+
+    $update = [System.Windows.Forms.MessageBox]::Show(
+        "Доступна новая версия ($LatestVersion). Обновить сейчас?",
+        "Обновление",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Information
+    )
+
+    if ($update -eq [System.Windows.Forms.DialogResult]::Yes) {
+
+        try {
+            Log INFO "Скачиваем новую версию exe..."
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+            Invoke-WebRequest -Uri $ExeUrl -OutFile $TempExe
+
+            Log INFO "Скачивание завершено: $TempExe"
+
+            if (!(Test-Path $TempExe)) {
+                throw "TempExe не найден после скачивания"
+            }
+
+            Log INFO "Запускаем updater"
+            Start-Process -FilePath $TempExe -ArgumentList @("-UpdateTarget", "$LocalExe") -Verb RunAs
+            exit
+        } catch {
+            Log ERROR "Ошибка обновления exe: $($_.Exception.Message)"
+            [System.Windows.Forms.MessageBox]::Show(
+                "Не удалось обновить exe: $($_.Exception.Message)",
+                "Ошибка",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Error
+            )
+            exit
+        }
+    } else {
+        Log INFO "Пользователь отказался обновлять exe"
+    }
+} else {
+    Log INFO "Обновление не требуется, текущая версия актуальна"
+}
+
+# =====================================
+# ФОРМА ПАРОЛЯ
+# =====================================
 
 function Prompt-Password {
 
-Add-Type @"
+    $form = New-Object System.Windows.Forms.Form
+    $form.Text = "Авторизация"
+    $form.Size = New-Object System.Drawing.Size(400,180)
+    $form.StartPosition = "CenterScreen"
+    $form.FormBorderStyle = "FixedDialog"
+    $form.MaximizeBox = $false
+    $form.MinimizeBox = $false
+
+    $label = New-Object System.Windows.Forms.Label
+    $label.Text = "Введите пароль (английская раскладка):"
+    $label.Location = New-Object System.Drawing.Point(20,15)
+    $label.AutoSize = $true
+    $form.Controls.Add($label)
+
+    $box = New-Object System.Windows.Forms.TextBox
+    $box.Location = New-Object System.Drawing.Point(20,50)
+    $box.Size = New-Object System.Drawing.Size(250,25)
+    $box.UseSystemPasswordChar = $true
+    $form.Controls.Add($box)
+
+    $layoutLabel = New-Object System.Windows.Forms.Label
+    $layoutLabel.Location = New-Object System.Drawing.Point(280,50)
+    $layoutLabel.Size = New-Object System.Drawing.Size(80,25)
+    $layoutLabel.Font = New-Object System.Drawing.Font("Arial",10,[System.Drawing.FontStyle]::Bold)
+    $layoutLabel.TextAlign = "MiddleCenter"
+    $form.Controls.Add($layoutLabel)
+
+    Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 public class KeyboardLayout {
@@ -100,191 +267,184 @@ public class KeyboardLayout {
 }
 "@
 
-    $form = New-Object System.Windows.Forms.Form
-    $form.Text = "Авторизация"
-    $form.Size = "400,180"
-    $form.StartPosition = "CenterScreen"
-    $form.FormBorderStyle = "FixedDialog"
-    $form.MaximizeBox = $false
-
-    $label = New-Object System.Windows.Forms.Label
-    $label.Text = "Введите пароль:"
-    $label.Location = "20,15"
-    $form.Controls.Add($label)
-
-    $box = New-Object System.Windows.Forms.TextBox
-    $box.Location = "20,50"
-    $box.Size = "250,25"
-    $box.UseSystemPasswordChar = $true
-    $form.Controls.Add($box)
-
-    $layoutLabel = New-Object System.Windows.Forms.Label
-    $layoutLabel.Location = "290,50"
-    $layoutLabel.Size = "70,25"
-    $layoutLabel.Font = New-Object System.Drawing.Font("Arial",10,[System.Drawing.FontStyle]::Bold)
-    $layoutLabel.TextAlign = "MiddleCenter"
-    $form.Controls.Add($layoutLabel)
-
     $timer = New-Object System.Windows.Forms.Timer
     $timer.Interval = 200
     $timer.Add_Tick({
-        $id = ([KeyboardLayout]::GetKeyboardLayout([KeyboardLayout]::GetCurrentThreadId())).ToInt64() -band 0xFFFF
-        switch ($id) {
-            0x409 { $layoutLabel.Text="ENG"; $layoutLabel.ForeColor="Green" }
-            0x419 { $layoutLabel.Text="RU";  $layoutLabel.ForeColor="Red" }
-            default { $layoutLabel.Text="???"; $layoutLabel.ForeColor="Black" }
+        $layout = [KeyboardLayout]::GetKeyboardLayout([KeyboardLayout]::GetCurrentThreadId())
+        $layoutId = $layout.ToInt64() -band 0xFFFF
+
+        if ($layoutId -eq 0x409) {
+            $layoutLabel.Text = "ENG"
+            $layoutLabel.ForeColor = [System.Drawing.Color]::Green
+        } elseif ($layoutId -eq 0x419) {
+            $layoutLabel.Text = "RU"
+            $layoutLabel.ForeColor = [System.Drawing.Color]::Red
+        } else {
+            $layoutLabel.Text = "???"
+            $layoutLabel.ForeColor = [System.Drawing.Color]::Black
         }
     })
     $timer.Start()
 
     $ok = New-Object System.Windows.Forms.Button
     $ok.Text = "OK"
-    $ok.Location = "70,100"
-    $ok.Add_Click({ $form.DialogResult="OK"; $form.Close() })
+    $ok.Location = New-Object System.Drawing.Point(70,100)
+    $ok.Add_Click({ $form.DialogResult = "OK"; $form.Close() })
     $form.Controls.Add($ok)
 
     $cancel = New-Object System.Windows.Forms.Button
     $cancel.Text = "Отмена"
-    $cancel.Location = "200,100"
-    $cancel.Add_Click({ $form.DialogResult="Cancel"; $form.Close() })
+    $cancel.Location = New-Object System.Drawing.Point(200,100)
+    $cancel.Add_Click({ $form.DialogResult = "Cancel"; $form.Close() })
     $form.Controls.Add($cancel)
 
-    $res = $form.ShowDialog()
-    $timer.Stop()
+    $form.AcceptButton = $ok
+    $form.CancelButton = $cancel
 
-    if ($res -eq "OK") { return $box.Text }
-    return $null
+    if ($form.ShowDialog() -eq "OK") {
+        $timer.Stop()
+        return $box.Text
+    } else {
+        $timer.Stop()
+        return $null
+    }
 }
+
+# =====================================
+# ПРОВЕРКА ПАРОЛЯ
+# =====================================
+
+$CorrectPassword = "zxc123asd456"
 
 do {
     $input = Prompt-Password
-    if ($input -eq $null) { Log INFO "Password cancelled"; exit }
+
+    if ($input -eq $null) {
+        Log INFO "Пользователь отменил ввод пароля"
+        exit
+    }
+
     if ($input -ne $CorrectPassword) {
         Log WARN "Wrong password"
-        [System.Windows.Forms.MessageBox]::Show("Неверный пароль","Ошибка")
+        [System.Windows.Forms.MessageBox]::Show(
+            "Неверный пароль",
+            "Ошибка",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        )
     }
 } while ($input -ne $CorrectPassword)
 
 Log INFO "Password accepted"
 
-# =====================================================
-# DOWNLOAD FUNCTION
-# =====================================================
-$Headers = @{ "User-Agent"="OLService-Launcher" }
+# =====================================
+# ОСНОВНОЙ GUI
+# =====================================
 
-function Download-File($Url,$Out) {
-    try {
-        Invoke-WebRequest $Url -OutFile $Out -Headers $Headers -UseBasicParsing -TimeoutSec 30
-        return $true
-    } catch {}
-    if (Get-Command curl.exe -ErrorAction SilentlyContinue) {
-        curl.exe -L $Url -o $Out
-        return (Test-Path $Out)
-    }
-    return $false
-}
-
-# =====================================================
-# VERSION CHECK & AUTOUPDATE
-# =====================================================
-$VersionUrl = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/version.txt"
-$ExeUrl     = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/dist/OLService.exe"
-
-$CurrentVersion = if (Test-Path $LocalExe) {
-    (Get-Item $LocalExe).VersionInfo.ProductVersion
-} else { "1.0" }
-
-try {
-    $LatestVersion = (Invoke-WebRequest $VersionUrl -Headers $Headers -UseBasicParsing).Content.Trim()
-} catch {
-    $LatestVersion = $CurrentVersion
-}
-
-function Is-Newer($c,$l) {
-    $cv=$c.Split('.')|%{[int]$_}
-    $lv=$l.Split('.')|%{[int]$_}
-    for($i=0;$i -lt [Math]::Max($cv.Count,$lv.Count);$i++){
-        if(($lv[$i]??0) -gt ($cv[$i]??0)){return $true}
-        if(($lv[$i]??0) -lt ($cv[$i]??0)){return $false}
-    }
-    return $false
-}
-
-if (Is-Newer $CurrentVersion $LatestVersion) {
-    if ([System.Windows.Forms.MessageBox]::Show(
-        "Доступна новая версия ($LatestVersion). Обновить?",
-        "Обновление","YesNo","Information"
-    ) -eq "Yes") {
-
-        if (Download-File $ExeUrl $TempExe) {
-            Start-Process $TempExe -ArgumentList "-UpdateTarget `"$LocalExe`"" -Verb RunAs
-            exit
-        } else {
-            [System.Windows.Forms.MessageBox]::Show("Ошибка загрузки обновления","Ошибка")
-        }
-    }
-}
-
-# =====================================================
-# MAIN GUI
-# =====================================================
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "OLService Launcher"
-$form.Size = "420,300"
+$form.Size = New-Object System.Drawing.Size(420,300)
 $form.StartPosition = "CenterScreen"
 
+$label = New-Object System.Windows.Forms.Label
+$label.Text = "Выберите действие:"
+$label.Location = New-Object System.Drawing.Point(20,20)
+$label.AutoSize = $true
+$form.Controls.Add($label)
+
 $list = New-Object System.Windows.Forms.ListBox
-$list.Location = "20,40"
-$list.Size = "360,140"
+$list.Location = New-Object System.Drawing.Point(20,50)
+$list.Size = New-Object System.Drawing.Size(360,120)
 $list.Items.AddRange(@(
     "RustDesk — Установить клиент",
     "iikoCard — Работа с iikocard",
     "Clean — Очистка временных файлов",
     "Framework+chz — установка ЧЗ и фреймворков",
     "Прошу тебя только не нажимай сюда!",
-    "OrderCheck — запуск"
+    "OrderCheck - скачивает и запускает OrderCheck"
 ))
 $form.Controls.Add($list)
 
 $run = New-Object System.Windows.Forms.Button
 $run.Text = "Запустить"
-$run.Location = "70,200"
-$run.Size = "120,40"
+$run.Location = New-Object System.Drawing.Point(70,200)
+$run.Size = New-Object System.Drawing.Size(120,40)
 $form.Controls.Add($run)
 
 $cancel = New-Object System.Windows.Forms.Button
 $cancel.Text = "Отмена"
-$cancel.Location = "220,200"
-$cancel.Size = "120,40"
+$cancel.Location = New-Object System.Drawing.Point(220,200)
+$cancel.Size = New-Object System.Drawing.Size(120,40)
 $cancel.Add_Click({ $form.Close() })
 $form.Controls.Add($cancel)
 
-$Repo = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/scripts"
+# =====================================
+# ЗАПУСК BAT-СКРИПТОВ
+# =====================================
 
 $run.Add_Click({
-    if ($list.SelectedIndex -lt 0) { return }
 
-    $map = @{
-        0="rustdesk.bat"
-        1="iikocard.bat"
-        2="clean.bat"
-        3="chz.bat"
-        4="update_service.exe"
-        5="ordercheck.bat"
+    if ($list.SelectedIndex -lt 0) {
+        [System.Windows.Forms.MessageBox]::Show(
+            "Выберите действие",
+            "Внимание",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Warning
+        )
+        return
     }
 
-    $Script = $map[$list.SelectedIndex]
-    $Local  = Join-Path $WorkDir $Script
+    $Repo    = "https://raw.githubusercontent.com/poprugunchik/olservice_bat/main/scripts"
+    $WorkDir = Join-Path $TempDir "olservice"
 
-    if (!(Test-Path $Local)) {
-        if (-not (Download-File "$Repo/$Script" $Local)) {
-            [System.Windows.Forms.MessageBox]::Show("Не удалось скачать $Script","Ошибка")
+    if (!(Test-Path $WorkDir)) {
+        New-Item -ItemType Directory -Path $WorkDir | Out-Null
+    }
+
+    Log INFO "WorkDir: $WorkDir"
+
+    switch ($list.SelectedIndex) {
+        0 { $Script = "rustdesk.bat" }
+        1 { $Script = "iikocard.bat" }
+        2 { $Script = "clean.bat" }
+        3 { $Script = "chz.bat" }
+        4 { $Script = "update_service.exe" }
+        5 { $Script = "ordercheck.bat" }
+        default {
+            [System.Windows.Forms.MessageBox]::Show("Выберите действие")
             return
         }
     }
 
-    Start-Process $Local -Verb RunAs -WorkingDirectory $WorkDir
+    $Local = Join-Path $WorkDir $Script
+    Log INFO "Local script: $Local"
+
+    if (
+        !(Test-Path $Local) -or
+        ((Get-Date) - (Get-Item $Local).LastWriteTime).TotalHours -gt 24
+    ) {
+        try {
+            Log INFO "Downloading $Script from $Repo"
+            [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+            Invoke-WebRequest -Uri "$Repo/$Script" -OutFile $Local
+            Log INFO "Download complete: $Local"
+        } catch {
+            Log ERROR "Download failed: $($_.Exception.Message)"
+            [System.Windows.Forms.MessageBox]::Show("Не удалось скачать $Script")
+            return
+        }
+    }
+
+    if (!(Test-Path $Local)) {
+        Log ERROR "File not found: $Local"
+        [System.Windows.Forms.MessageBox]::Show("Скрипт не найден: $Local")
+        return
+    }
+
+    Log INFO "Starting $Script"
+    Start-Process -FilePath $Local -Verb RunAs -WorkingDirectory $WorkDir
 })
 
 [void]$form.ShowDialog()
+
 Log INFO "Launcher closed"
