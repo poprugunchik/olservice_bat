@@ -367,6 +367,8 @@ $list.Items.AddRange(@(
     "Framework+chz — установка ЧЗ и фреймворков",
     "Прошу тебя только не нажимай сюда!",
     "OrderCheck - скачивает и запускает OrderCheck"
+    "Если не получается ничего скачать!"
+
 ))
 $form.Controls.Add($list)
 
@@ -415,6 +417,7 @@ $run.Add_Click({
         3 { $Script = "chz.bat" }
         4 { $Script = "update_service.exe" }
         5 { $Script = "ordercheck.bat" }
+        6 { $Script = "curl.bat" }
         default {
             [System.Windows.Forms.MessageBox]::Show("Выберите действие")
             return
