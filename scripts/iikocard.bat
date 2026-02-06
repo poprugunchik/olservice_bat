@@ -81,8 +81,25 @@ echo Отключаем Защиту в реальном времени Windows Defender...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "Set-MpPreference -DisableRealtimeMonitoring $true"
 
+:: Определяем, какой curl.exe использовать
+set "CURL_EXE="
+
+if exist "%SystemRoot%\System32\curl.exe" (
+    set "CURL_EXE=%SystemRoot%\System32\curl.exe"
+) else if exist "C:\iiko\curl\curl-8.6.0_3-win64-mingw\bin\curl.exe" (
+    set "CURL_EXE=C:\iiko\curl\curl-8.6.0_3-win64-mingw\bin\curl.exe"
+) else (
+    echo curl.exe не найден. Установите curl.
+    pause
+    exit /b 1
+)
+
+echo Используется curl:
+"%CURL_EXE%" --version
+echo.
+
 echo Скачивание установщика iikoCardPOS...
-curl -L -o "%INSTALLER_PATH%" "%DOWNLOAD_URL%"
+"%CURL_EXE%" -L -o "%INSTALLER_PATH%" "%DOWNLOAD_URL%"
 if not exist "%INSTALLER_PATH%" (
     echo Ошибка: не удалось скачать файл. Проверьте интернет-соединение.
     exit /b
