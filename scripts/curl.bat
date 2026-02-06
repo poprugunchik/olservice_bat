@@ -4,15 +4,14 @@ setlocal enabledelayedexpansion
 
 
 :: Проверяем, есть ли curl в системе
-where curl >nul 2>&1
-if %errorlevel%==0 (
+where curl.exe >nul 2>&1
+if not errorlevel 1 (
     echo curl уже установлен.
     echo Версия:
-    curl --version
+    "%SystemRoot%\System32\curl.exe" --version
     echo.
-    echo Окно закроется через 5 секунд...
     timeout /t 5 /nobreak >nul
-    exit
+    exit /b 0
 )
 
 
