@@ -2,6 +2,18 @@
 chcp 1251 >nul
 setlocal enabledelayedexpansion
 
+
+:: Проверяем, есть ли curl в системе
+where curl >nul 2>&1
+if %errorlevel%==0 (
+    echo curl уже установлен.
+    curl --version
+    pause
+    exit /b 0
+)
+
+echo curl не найден
+
 :: Папка, куда скачиваем curl
 set "CURL_DIR=C:\iiko\curl"
 
