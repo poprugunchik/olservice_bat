@@ -7,10 +7,14 @@ setlocal enabledelayedexpansion
 where curl >nul 2>&1
 if %errorlevel%==0 (
     echo curl уже установлен.
+    echo Версия:
     curl --version
+    echo.
+    echo Окно закроется через 5 секунд...
     timeout /t 5 /nobreak >nul
     exit
 )
+
 
 echo curl не найден
 
