@@ -8,8 +8,8 @@ where curl >nul 2>&1
 if %errorlevel%==0 (
     echo curl уже установлен.
     curl --version
-    pause
-    exit /b 0
+    timeout /t 5 /nobreak >nul
+    exit
 )
 
 echo curl не найден
