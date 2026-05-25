@@ -8,7 +8,7 @@ setlocal enabledelayedexpansion
 set "FRAMEWORK_URL=https://go.microsoft.com/fwlink/?LinkId=2088631"
 set "FRAMEWORK_FILE=%TEMP%\ndp48-x86-x64-allos-enu.exe"
 
-set "MSI_URL=https://קוסעםûיחםאך.נפ/upload/regime-1.5.1-523.msi"
+set "MSI_URL=https://xn--80ajghhoc2aj1c8b.xn--p1ai/upload/regime-2.5.1-2.msi"
 set "MSI_FILE=regime.msi"
 
 :: ===============================
