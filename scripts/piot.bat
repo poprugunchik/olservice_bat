@@ -1,12 +1,12 @@
-ï»¿@echo off
+@echo off
 chcp 1251 >nul
 setlocal
 setlocal EnableExtensions EnableDelayedExpansion
 
-:: ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° Ð¿Ñ€Ð°Ð² Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð°
+:: Ïðîâåðêà ïðàâ àäìèíèñòðàòîðà
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo Ð¢Ñ€ÐµÐ±ÑƒÑŽÑ‚ÑÑ Ð¿Ñ€Ð°Ð²Ð° Ð°Ð´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€Ð°...
+    echo Òðåáóþòñÿ ïðàâà àäìèíèñòðàòîðà...
     
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "Start-Process '%~f0' -Verb RunAs"
@@ -21,47 +21,48 @@ set "LOGFILE=%WORKDIR%\main.log"
 
 if not exist "%WORKDIR%" mkdir "%WORKDIR%" 2>nul
 
-REM ÐžÑ‡Ð¸ÑÑ‚ÐºÐ° Ð¿ÐµÑ€ÐµÐ´ ÑÑ‚Ð°Ñ€Ñ‚Ð¾Ð¼
+REM Î÷èñòêà ïåðåä ñòàðòîì
 echo ===============================================> "%LOGFILE%"
 echo START %DATE% %TIME%>> "%LOGFILE%"
 echo ===============================================>> "%LOGFILE%"
 echo.>> "%LOGFILE%"
 
-call :LOG "=== Ð¡ÐºÑ€Ð¸Ð¿Ñ‚ Ð·Ð°Ð¿ÑƒÑ‰ÐµÐ½ ==="
+call :LOG "=== Ñêðèïò çàïóùåí ==="
 
-
+call :RUN
 exit /b
 
 :LOG
-REM Ð•Ð´Ð¸Ð½Ð°Ñ Ñ„ÑƒÐ½ÐºÑ†Ð¸Ñ Ð»Ð¾Ð³Ð¸Ñ€Ð¾Ð²Ð°Ð½Ð¸Ñ Ñ Ð²Ñ€ÐµÐ¼ÐµÐ½ÐµÐ¼
+REM Åäèíàÿ ôóíêöèÿ ëîãèðîâàíèÿ ñ âðåìåíåì
 >>"%LOGFILE%" echo [%DATE% %TIME%] %*
 exit /b
 
 :RUN
-call :LOG "=== ÐÐÐ§ÐÐ›Ðž Ð ÐÐ‘ÐžÐ¢Ð« ==="
+call :LOG "=== ÍÀ×ÀËÎ ÐÀÁÎÒÛ ==="
 
 set "WORKDIR=C:\Temp\LMInstall"
 set "LIST=%WORKDIR%\install_list.txt"
 set "FRAMEWORK_URL=https://go.microsoft.com/fwlink/?LinkId=2088631"
 set "FRAMEWORK_FILE=%TEMP%\ndp48-x86-x64-allos-enu.exe"
+set "FTP_URL=ftp://rustdesk.olservice.ru/files/ndp48-x86-x64-allos-enu.exe"
 set "FTP=ftp://rustdesk.olservice.ru/files"
 set "USER=olservice"
-set "PASS=ÐŸÐ°Ð¼Ð¿Ð°Ð¼123"
+set "PASS=Ïàìïàì123"
 
 if not exist "%WORKDIR%" mkdir "%WORKDIR%" 2>nul
 
 echo.
 echo ========================================
-echo            ÐŸÐ˜ÐžÐ¢ Ð“ÐžÐ¡ÐŸÐžÐ”Ð˜
+echo            ÏÈÎÒ ÃÎÑÏÎÄÈ
 echo ========================================
 echo.
-echo 1 - ÐŸÐµÑ€Ð²Ð¸Ñ‡Ð½Ð°Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ°
-echo 2 - ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ° ÐŸÐ˜ÐžÐ¢
-echo 3 - ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÑÑ‚Ð°Ñ‚ÑƒÑÐ° ÐŸÐ˜ÐžÐ¢
-echo 0 - Ð’Ñ‹Ñ…Ð¾Ð´
+echo 1 - Ïåðâè÷íàÿ óñòàíîâêà
+echo 2 - Íàñòðîéêà ÏÈÎÒ
+echo 3 - Ïðîâåðêà ñòàòóñà ÏÈÎÒ
+echo 0 - Âûõîä
 echo.
 
-choice /c 1230 /m "Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ñ€ÐµÐ¶Ð¸Ð¼"
+choice /c 1230 /m "Âûáåðèòå ðåæèì"
 
 if errorlevel 4 goto :EXIT
 if errorlevel 3 goto :STATUS
@@ -72,16 +73,16 @@ if errorlevel 1 goto :FIRST_INSTALL
 :: FIRST INSTALL
 :: =======================================
 :FIRST_INSTALL
-call :LOG "=== Ð ÐµÐ¶Ð¸Ð¼: ÐŸÐ•Ð Ð’Ð˜Ð§ÐÐÐ¯ Ð£Ð¡Ð¢ÐÐÐžÐ’ÐšÐ ==="
+call :LOG "=== Ðåæèì: ÏÅÐÂÈ×ÍÀß ÓÑÒÀÍÎÂÊÀ ==="
 echo.
-echo Ð’Ñ‹Ð±Ñ€Ð°Ð½ Ñ€ÐµÐ¶Ð¸Ð¼: ÐŸÐµÑ€Ð²Ð¸Ñ‡Ð½Ð°Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ°
+echo Âûáðàí ðåæèì: Ïåðâè÷íàÿ óñòàíîâêà
 echo ========================================
 
 set "TOKEN_FILE=%WORKDIR%\token.txt"
 
 if not exist "C:\Temp\LMInstall" mkdir "C:\Temp\LMInstall" 2>nul
 
-rem --- Ñ‡Ð¸Ñ‚Ð°ÐµÐ¼ Ñ‚Ð¾ÐºÐµÐ½ ---
+rem --- ÷èòàåì òîêåí ---
 set "TOKEN="
 for /f "delims=" %%A in ('type "%TOKEN_FILE%" 2^>nul') do set "TOKEN=%%A"
 
@@ -92,35 +93,35 @@ echo ==============================
 echo.
 
 if defined TOKEN (
-    echo Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ Ñ‚Ð¾ÐºÐµÐ½:
+    echo Òåêóùèé òîêåí:
     echo [%TOKEN%]
-    call :LOG "Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ Ñ‚Ð¾ÐºÐµÐ½: %TOKEN%"
+    call :LOG "Òåêóùèé òîêåí: %TOKEN%"
 ) else (
-    echo Ð¢Ð¾ÐºÐµÐ½ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½.
-    call :LOG "Ð¢Ð¾ÐºÐµÐ½ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½"
+    echo Òîêåí íå íàéäåí.
+    call :LOG "Òîêåí íå íàéäåí"
     goto :change
 )
 
 echo.
-echo [1] ÐžÑÑ‚Ð°Ð²Ð¸Ñ‚ÑŒ
-echo [2] Ð—Ð°Ð¼ÐµÐ½Ð¸Ñ‚ÑŒ
+echo [1] Îñòàâèòü
+echo [2] Çàìåíèòü
 echo.
 
-choice /c 12 /m "Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ñ€ÐµÐ¶Ð¸Ð¼"
+choice /c 12 /m "Âûáåðèòå ðåæèì"
 if errorlevel 2 goto :change
 if errorlevel 1 goto :end
 
 
 :change
 echo.
-set /p TOKEN=Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ð½Ð¾Ð²Ñ‹Ð¹ Ñ‚Ð¾ÐºÐµÐ½:
-call :LOG "Ð’Ð²ÐµÐ´ÐµÐ½ Ð½Ð¾Ð²Ñ‹Ð¹ Ñ‚Ð¾ÐºÐµÐ½: %TOKEN%"
+set /p TOKEN=Ââåäèòå íîâûé òîêåí:
+call :LOG "Ââåäåí íîâûé òîêåí: %TOKEN%"
 
 powershell -NoProfile -Command "[System.IO.File]::WriteAllText('%TOKEN_FILE%', '%TOKEN%')"
-call :LOG "Ð¢Ð¾ÐºÐµÐ½ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½ Ð² Ñ„Ð°Ð¹Ð»: %TOKEN_FILE%"
+call :LOG "Òîêåí ñîõðàíåí â ôàéë: %TOKEN_FILE%"
 
 echo.
-echo Ð¢Ð¾ÐºÐµÐ½ Ð¾Ð±Ð½Ð¾Ð²Ð»ÐµÐ½, Ð²Ñ‹ Ð¼Ð¾Ð»Ð¾Ð´ÐµÑ†.
+echo Òîêåí îáíîâëåí, âû ìîëîäåö.
 goto :end
 
 :end
@@ -128,13 +129,13 @@ echo.
 timeout /t 3 >nul
 echo.
 
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Windows Firewall..."
+call :LOG "Îòêëþ÷àåì Windows Firewall..."
 netsh advfirewall set allprofiles state off >nul 2>&1
-call :LOG "Windows Firewall Ð¾Ñ‚ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Windows Firewall îòêëþ÷åí"
 
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Defender..."
+call :LOG "Îòêëþ÷àåì Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
-call :LOG "Defender Ð¾Ñ‚ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Defender îòêëþ÷åí"
 
 echo.
 echo ========================================
@@ -143,9 +144,9 @@ echo ========================================
 
 if exist "%LIST%" del "%LIST%" 2>nul
 
-call :LOG "ÐŸÑ€Ð¾Ð²ÐµÑ€ÐºÐ° ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð½Ñ‹Ñ… ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ð¾Ð²..."
+call :LOG "Ïðîâåðêà óñòàíîâëåííûõ êîìïîíåíòîâ..."
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$list=@('ESM|Ð•Ð´Ð¸Ð½Ñ‹Ð¹ Ð¡ÐµÑ€Ð²Ð¸ÑÐ½Ñ‹Ð¹ ÐœÐ¾Ð´ÑƒÐ»ÑŒ|1.6.2.1','KKT|Ð”Ñ€Ð°Ð¹Ð²ÐµÑ€ ÐšÐšÐ¢ v.10 (32-bit)|10.10.8.24','LM|Ð›Ð¾ÐºÐ°Ð»ÑŒÐ½Ñ‹Ð¹ Ð¼Ð¾Ð´ÑƒÐ»ÑŒ Ð§ÐµÑÑ‚Ð½Ñ‹Ð¹ Ð—Ð½Ð°Ðº|2.5.1','CONTROLLER|Ð•Ð¡ÐŸ ÐšÐ¾Ð½Ñ‚Ñ€Ð¾Ð»Ð»ÐµÑ€ Ð›Ðœ Ð§Ð—|1.6.2.1'); $reg=Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue; $need=@(); foreach($i in $list){$key,$name,$ver=$i -split '\|'; $found=$reg | Where-Object { $_.DisplayName -and $_.DisplayName -like ('*'+$name+'*') } | Select-Object -ExpandProperty DisplayVersion -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $found){Write-Host '[NOT INSTALLED]' $key; $need+=$key} elseif([version]$found -ne [version]$ver){Write-Host '[VERSION MISMATCH]' $key '->' $found 'required:' $ver; $need+=$key} else {Write-Host '[OK]' $key '->' $found}}; $need | Set-Content '%LIST%' -Encoding ASCII"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$list=@('ESM|Åäèíûé Ñåðâèñíûé Ìîäóëü|1.6.2.1','KKT|Äðàéâåð ÊÊÒ v.10 (32-bit)|10.10.8.24','LM|Ëîêàëüíûé ìîäóëü ×åñòíûé Çíàê|2.5.1','CONTROLLER|ÅÑÏ Êîíòðîëëåð ËÌ ×Ç|1.6.2.1'); $reg=Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue; $need=@(); foreach($i in $list){$key,$name,$ver=$i -split '\|'; $found=$reg | Where-Object { $_.DisplayName -and $_.DisplayName -like ('*'+$name+'*') } | Select-Object -ExpandProperty DisplayVersion -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $found){Write-Host '[NOT INSTALLED]' $key; $need+=$key} elseif([version]$found -ne [version]$ver){Write-Host '[VERSION MISMATCH]' $key '->' $found 'required:' $ver; $need+=$key} else {Write-Host '[OK]' $key '->' $found}}; $need | Set-Content '%LIST%' -Encoding ASCII"
 
 echo.
 echo NEED INSTALL LIST
@@ -153,11 +154,11 @@ echo ----------------------------------------
 
 if exist "%LIST%" (
     type "%LIST%"
-    call :LOG "Ð¡Ð¿Ð¸ÑÐ¾Ðº Ð´Ð»Ñ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ¸:"
+    call :LOG "Ñïèñîê äëÿ óñòàíîâêè:"
     for /f "delims=" %%A in ('type "%LIST%"') do call :LOG "  - %%A"
 ) else (
     echo Nothing to install
-    call :LOG "Ð’ÑÐµ ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ñ‹ ÑƒÐ¶Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ñ‹"
+    call :LOG "Âñå êîìïîíåíòû óæå óñòàíîâëåíû"
 )
 
 echo.
@@ -174,29 +175,40 @@ for /f "tokens=3" %%A in (
 
 if "%NET48_INSTALLED%"=="1" (
     echo .NET 4.8 already installed
-    call :LOG ".NET 4.8 ÑƒÐ¶Ðµ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½"
+    call :LOG ".NET 4.8 óæå óñòàíîâëåí"
 ) else (
     echo Installing .NET 4.8...
-    call :LOG "ÐÐ°Ñ‡Ð¸Ð½Ð°ÐµÐ¼ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²ÐºÑƒ .NET 4.8..."
+    call :LOG "Íà÷èíàåì óñòàíîâêó .NET 4.8..."
 
+    :: 1. FTP (îñíîâíîé)
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "Invoke-WebRequest -Uri '%FRAMEWORK_URL%' -OutFile '%FRAMEWORK_FILE%'"
-    call :LOG "Ð¡ÐºÐ°Ñ‡Ð°Ð½ .NET 4.8 ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ñ‰Ð¸Ðº: %FRAMEWORK_FILE%"
+    "try { $wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP_URL%','%FRAMEWORK_FILE%') } catch { }"
 
+    :: 2. Microsoft (fallback + FIX TLS)
     if not exist "%FRAMEWORK_FILE%" (
-        call :LOG "ÐžÐ¨Ð˜Ð‘ÐšÐ: ÐÐµ ÑƒÐ´Ð°Ð»Ð¾ÑÑŒ ÑÐºÐ°Ñ‡Ð°Ñ‚ÑŒ .NET 4.8"
+        call :LOG "FTP íå ñðàáîòàë, ïðîáóåì Microsoft..."
+
+        powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+        "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%FRAMEWORK_URL%' -OutFile '%FRAMEWORK_FILE%' -ErrorAction Stop } catch { }"
+    )
+
+    :: 3. ôèíàëüíàÿ ïðîâåðêà
+    if not exist "%FRAMEWORK_FILE%" (
+        call :LOG "ÎØÈÁÊÀ: Íå óäàëîñü ñêà÷àòü .NET 4.8 íè ñ Microsoft, íè ñ FTP"
         goto :CLEANUP
     )
 
+    call :LOG "Ôàéë .NET ñêà÷àí: %FRAMEWORK_FILE%"
+
+    :: 4. óñòàíîâêà
     start /wait "" "%FRAMEWORK_FILE%" /quiet /norestart
-    call :LOG "Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° .NET 4.8 Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð° Ñ ÐºÐ¾Ð´Ð¾Ð¼: %errorlevel%"
+    call :LOG "Óñòàíîâêà .NET 4.8 çàâåðøåíà ñ êîäîì: %errorlevel%"
 
     if errorlevel 1 (
-        call :LOG "ÐžÐ¨Ð˜Ð‘ÐšÐ: Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° .NET 4.8 Ð½Ðµ ÑƒÐ´Ð°Ð»Ð°ÑÑŒ"
+        call :LOG "ÎØÈÁÊÀ: Óñòàíîâêà .NET 4.8 íå óäàëàñü"
         goto :CLEANUP
     )
 )
-
 echo.
 echo ========================================
 echo DOWNLOAD PHASE
@@ -206,34 +218,34 @@ for /f "delims=" %%A in (%LIST%) do (
     echo ----------------------------------------
     echo Download: %%A
     echo ----------------------------------------
-    call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ð°: %%A"
+    call :LOG "Ñêà÷èâàíèå êîìïîíåíòà: %%A"
 
     if "%%A"=="ESM" (
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ ESM main package..."
+        call :LOG "Ñêà÷èâàíèå ESM main package..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm_1.6.2.1-windows-signed-setup.exe','%WORKDIR%\esm_1.6.2.1-windows-signed-setup.exe')"
         
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ ESM helper..."
+        call :LOG "Ñêà÷èâàíèå ESM helper..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm_install.exe','%WORKDIR%\esm_install.exe')"
-        call :LOG "ESM ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ñ‹ ÑÐºÐ°Ñ‡Ð°Ð½Ñ‹"
+        call :LOG "ESM êîìïîíåíòû ñêà÷àíû"
     )
 
     if "%%A"=="LM" (
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ LM..."
+        call :LOG "Ñêà÷èâàíèå LM..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/regime-2.5.1-2.msi','%WORKDIR%\regime-2.5.1-2.msi')"
         
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ reg_install..."
+        call :LOG "Ñêà÷èâàíèå reg_install..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/reg_install.exe','%WORKDIR%\reg_install.exe')"
-        call :LOG "LM ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ñ‹ ÑÐºÐ°Ñ‡Ð°Ð½Ñ‹"
+        call :LOG "LM êîìïîíåíòû ñêà÷àíû"
 	
     )
 
     if "%%A"=="KKT" (
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ KKT..."
+        call :LOG "Ñêà÷èâàíèå KKT..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/KKT10-10.10.8.24-windows32-setup-signed.exe','%WORKDIR%\KKT10-10.10.8.24-windows32-setup-signed.exe')"
         
-        call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ dto_install..."
+        call :LOG "Ñêà÷èâàíèå dto_install..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/dto_install.exe','%WORKDIR%\dto_install.exe')"
-        call :LOG "KKT ÐºÐ¾Ð¼Ð¿Ð¾Ð½ÐµÐ½Ñ‚Ñ‹ ÑÐºÐ°Ñ‡Ð°Ð½Ñ‹"
+        call :LOG "KKT êîìïîíåíòû ñêà÷àíû"
     )
 )
 
@@ -241,48 +253,48 @@ echo.
 echo ========================================
 echo DOWNLOAD INSTALLER
 echo ========================================
-call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ installer.bat..."
+call :LOG "Ñêà÷èâàíèå installer.bat..."
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('ftp://rustdesk.olservice.ru/files/installer.bat','%WORKDIR%\installer.bat')"
-call :LOG "installer.bat ÑÐºÐ°Ñ‡Ð°Ð½"
+call :LOG "installer.bat ñêà÷àí"
 
 echo.
 echo ========================================
 echo START INSTALLER
 echo ========================================
 pushd "%WORKDIR%"
-call :LOG "Ð—Ð°Ð¿ÑƒÑÐº installer.bat Ð¸Ð· Ð¿Ð°Ð¿ÐºÐ¸ %WORKDIR%"
+call :LOG "Çàïóñê installer.bat èç ïàïêè %WORKDIR%"
 call "%WORKDIR%\installer.bat"
 
 echo ERRORLEVEL=%ERRORLEVEL%
 
-call :LOG "installer.bat Ð·Ð°Ð²ÐµÑ€ÑˆÐ¸Ð» Ñ€Ð°Ð±Ð¾Ñ‚Ñƒ"
+call :LOG "installer.bat çàâåðøèë ðàáîòó"
 popd
 
 echo.
 echo ========================================
 echo DOWNLOAD INIT BAT
 echo ========================================
-call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ init.bat..."
+call :LOG "Ñêà÷èâàíèå init.bat..."
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('ftp://rustdesk.olservice.ru/files/init.bat','%WORKDIR%\init.bat')"
-call :LOG "init.bat ÑÐºÐ°Ñ‡Ð°Ð½"
+call :LOG "init.bat ñêà÷àí"
 
 start "" cmd /c "%WORKDIR%\init.bat"
-call :LOG "Ð—Ð°Ð¿ÑƒÑ‰ÐµÐ½ init.bat"
+call :LOG "Çàïóùåí init.bat"
 
 goto CLEANUP
 
 :CLEANUP
-call :LOG "=== Ð—ÐÐ’Ð•Ð Ð¨Ð•ÐÐ˜Ð• Ð£Ð¡Ð¢ÐÐÐžÐ’ÐšÐ˜ ==="
-call :LOG "Ð’ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Windows Firewall..."
+call :LOG "=== ÇÀÂÅÐØÅÍÈÅ ÓÑÒÀÍÎÂÊÈ ==="
+call :LOG "Âêëþ÷àåì Windows Firewall..."
 netsh advfirewall set allprofiles state on >nul 2>&1
-call :LOG "Windows Firewall Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Windows Firewall âêëþ÷åí"
 
-call :LOG "Ð’ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Defender..."
+call :LOG "Âêëþ÷àåì Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $false" >nul 2>&1
-call :LOG "Defender Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Defender âêëþ÷åí"
 
 echo.
-echo Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° Ð·Ð°Ð²ÐµÑ€ÑˆÐµÐ½Ð°.
+echo Óñòàíîâêà çàâåðøåíà.
 timeout /t 10 >nul
 goto EXIT
 
@@ -290,38 +302,38 @@ goto EXIT
 :: PIOT
 :: =======================================
 :PIOT_SETUP
-call :LOG "=== Ð ÐµÐ¶Ð¸Ð¼: ÐÐÐ¡Ð¢Ð ÐžÐ™ÐšÐ ÐŸÐ˜ÐžÐ¢ ==="
-echo ÐÐ°ÑÑ‚Ñ€Ð¾Ð¹ÐºÐ° ÐŸÐ˜ÐžÐ¢
+call :LOG "=== Ðåæèì: ÍÀÑÒÐÎÉÊÀ ÏÈÎÒ ==="
+echo Íàñòðîéêà ÏÈÎÒ
 echo.
 echo ========================================
-echo            Ð’Ñ‹Ð±Ð¾Ñ€ Ð²ÐµÑ€ÑÐ¸Ð¸
+echo            Âûáîð âåðñèè
 echo ========================================
 echo.
-echo 1 - Ð’ÐµÑ€ÑÐ¸Ñ 9.2
-echo 2 - Ð’ÐµÑ€ÑÐ¸Ñ 9.4
-echo 0 - Ð’Ñ‹Ñ…Ð¾Ð´
+echo 1 - Âåðñèÿ 9.2
+echo 2 - Âåðñèÿ 9.4
+echo 0 - Âûõîä
 echo.
 
-choice /c 120 /m "Ð’Ñ‹Ð±ÐµÑ€Ð¸Ñ‚Ðµ Ñ€ÐµÐ¶Ð¸Ð¼"
+choice /c 120 /m "Âûáåðèòå ðåæèì"
 
 if errorlevel 3 goto EXIT
 if errorlevel 2 goto NEW_VERSION
 if errorlevel 1 goto OLD_VERSION
 
 :OLD_VERSION
-call :LOG "=== Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÐŸÐ˜ÐžÐ¢ Ð²ÐµÑ€ÑÐ¸Ð¸ 9.2 ==="
+call :LOG "=== Óñòàíîâêà ÏÈÎÒ âåðñèè 9.2 ==="
 echo.
 echo ========================================
 echo ADD CERITIFICATES
 echo ========================================
-echo Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÑÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ð²...
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Windows Firewall..."
+echo Óñòàíîâêà ñåðòèôèêàòîâ...
+call :LOG "Îòêëþ÷àåì Windows Firewall..."
 netsh advfirewall set allprofiles state off >nul 2>&1
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Defender..."
+call :LOG "Îòêëþ÷àåì Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
 
-call :LOG "Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÑÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ð² Ð² Ð´Ð¾Ð²ÐµÑ€ÐµÐ½Ð½Ñ‹Ðµ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ðµ Ñ†ÐµÐ½Ñ‚Ñ€Ñ‹..."
+call :LOG "Óñòàíîâêà ñåðòèôèêàòîâ â äîâåðåííûå êîðíåâûå öåíòðû..."
 
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\ca.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt_base.crt" >nul 2>&1
@@ -329,9 +341,9 @@ certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 
-call :LOG "Ð¡ÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ñ‹ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ñ‹"
+call :LOG "Ñåðòèôèêàòû óñòàíîâëåíû"
 echo.
-echo Ð¡ÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ñ‹ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ñ‹.
+echo Ñåðòèôèêàòû óñòàíîâëåíû.
 
 :: =======================================
 :: PIOT INSTALL FLOW
@@ -340,9 +352,9 @@ echo.
 echo ========================================
 echo DOWNLOADING ZIP
 echo ========================================
-call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð° ÐŸÐ˜ÐžÐ¢ 9.2..."
+call :LOG "Ñêà÷èâàíèå ïëàãèíà ÏÈÎÒ 9.2..."
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('ftp://rustdesk.olservice.ru/files/Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview4.1.0.280.zip','%WORKDIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview4.1.0.280.zip')"
-call :LOG "ÐŸÐ»Ð°Ð³Ð¸Ð½ ÑÐºÐ°Ñ‡Ð°Ð½"
+call :LOG "Ïëàãèí ñêà÷àí"
 
 set "PLUGINS_DIR=C:\Program Files\iiko\iikoRMS\Front.Net\Plugins"
 set "FRONT_DIR=C:\Program Files\iiko\iikoRMS\Front.Net"
@@ -352,9 +364,9 @@ set "DESKTOP=%USERPROFILE%\Desktop"
 echo ========================================
 echo STOP IIKO FRONT
 echo ========================================
-call :LOG "ÐžÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° iikoFront.Net.exe..."
+call :LOG "Îñòàíîâêà iikoFront.Net.exe..."
 taskkill /f /im iikoFront.Net.exe /T >nul 2>&1
-call :LOG "iikoFront.Net.exe Ð¾ÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½"
+call :LOG "iikoFront.Net.exe îñòàíîâëåí"
 
 echo.
 echo ========================================
@@ -366,13 +378,13 @@ set "FOUND=0"
 for /d %%D in ("%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin*") do (
     set "FOUND=1"
     echo Moving %%D to Desktop
-    call :LOG "ÐŸÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ðµ ÑÑ‚Ð°Ñ€Ð¾Ð¹ Ð²ÐµÑ€ÑÐ¸Ð¸ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð°: %%D -> %DESKTOP%"
+    call :LOG "Ïåðåìåùåíèå ñòàðîé âåðñèè ïëàãèíà: %%D -> %DESKTOP%"
     move "%%D" "%DESKTOP%" >nul 2>&1
 )
 
 if "!FOUND!"=="0" (
     echo No old plugin found, skipping backup
-    call :LOG "Ð¡Ñ‚Ð°Ñ€Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°"
+    call :LOG "Ñòàðàÿ âåðñèÿ ïëàãèíà íå íàéäåíà"
 )
 
 echo.
@@ -380,54 +392,54 @@ echo ========================================
 echo COPY ZIP
 echo ========================================
 copy /y "%ZIP_FILE%" "%PLUGINS_DIR%" >nul
-call :LOG "ZIP-Ñ„Ð°Ð¹Ð» ÑÐºÐ¾Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ð½ Ð² %PLUGINS_DIR%"
+call :LOG "ZIP-ôàéë ñêîïèðîâàí â %PLUGINS_DIR%"
 
 echo.
 echo ========================================
 echo EXTRACT ZIP
 echo ========================================
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Force '%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview4.1.0.280.zip' '%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview4.1.0.280'"
-call :LOG "ZIP-Ñ„Ð°Ð¹Ð» Ñ€Ð°ÑÐ¿Ð°ÐºÐ¾Ð²Ð°Ð½"
+call :LOG "ZIP-ôàéë ðàñïàêîâàí"
 
 echo.
 echo ========================================
 echo START IIKO FRONT
 echo ========================================
 start "" "%FRONT_DIR%\iikoFront.Net.exe"
-call :LOG "Ð—Ð°Ð¿ÑƒÑ‰ÐµÐ½ iikoFront.Net.exe"
+call :LOG "Çàïóùåí iikoFront.Net.exe"
 
 echo Waiting for config.json...
-call :LOG "ÐžÐ¶Ð¸Ð´Ð°Ð½Ð¸Ðµ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ config.json..."
+call :LOG "Îæèäàíèå ñîçäàíèÿ config.json..."
 
 set "CONFIG_FILE=%APPDATA%\iiko\CashServer\PluginConfigs\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview4.1.0.280\config.json"
 
 call :wait_for_file "%CONFIG_FILE%" 300
 
 if errorlevel 1 (
-    call :LOG "ÐžÐ¨Ð˜Ð‘ÐšÐ: config.json Ð½Ðµ ÑÐ¾Ð·Ð´Ð°Ð½ Ð·Ð° Ð¾Ñ‚Ð²ÐµÐ´ÐµÐ½Ð½Ð¾Ðµ Ð²Ñ€ÐµÐ¼Ñ"
+    call :LOG "ÎØÈÁÊÀ: config.json íå ñîçäàí çà îòâåäåííîå âðåìÿ"
     echo ERROR: config.json not created in time
     exit /b 1
 )
 
-call :LOG "config.json Ð¾Ð±Ð½Ð°Ñ€ÑƒÐ¶ÐµÐ½"
+call :LOG "config.json îáíàðóæåí"
 echo Config detected!
 echo DONE
 goto CLEANUP_PIOT
 
 :NEW_VERSION
-call :LOG "=== Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÐŸÐ˜ÐžÐ¢ Ð²ÐµÑ€ÑÐ¸Ð¸ 9.4 ==="
+call :LOG "=== Óñòàíîâêà ÏÈÎÒ âåðñèè 9.4 ==="
 echo.
 echo ========================================
 echo ADD CERITIFICATES
 echo ========================================
-echo Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÑÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ð²...
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Windows Firewall..."
+echo Óñòàíîâêà ñåðòèôèêàòîâ...
+call :LOG "Îòêëþ÷àåì Windows Firewall..."
 netsh advfirewall set allprofiles state off >nul 2>&1
-call :LOG "ÐžÑ‚ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼ Defender..."
+call :LOG "Îòêëþ÷àåì Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
 
-call :LOG "Ð£ÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° ÑÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ð² Ð² Ð´Ð¾Ð²ÐµÑ€ÐµÐ½Ð½Ñ‹Ðµ ÐºÐ¾Ñ€Ð½ÐµÐ²Ñ‹Ðµ Ñ†ÐµÐ½Ñ‚Ñ€Ñ‹..."
+call :LOG "Óñòàíîâêà ñåðòèôèêàòîâ â äîâåðåííûå êîðíåâûå öåíòðû..."
 
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\ca.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt_base.crt" >nul 2>&1
@@ -435,9 +447,9 @@ certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 
-call :LOG "Ð¡ÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ñ‹ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ñ‹"
+call :LOG "Ñåðòèôèêàòû óñòàíîâëåíû"
 echo.
-echo Ð¡ÐµÑ€Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ñ‹ ÑƒÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ñ‹.
+echo Ñåðòèôèêàòû óñòàíîâëåíû.
 
 :: =======================================
 :: PIOT INSTALL FLOW
@@ -446,9 +458,9 @@ echo.
 echo ========================================
 echo DOWNLOADING ZIP
 echo ========================================
-call :LOG "Ð¡ÐºÐ°Ñ‡Ð¸Ð²Ð°Ð½Ð¸Ðµ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð° ÐŸÐ˜ÐžÐ¢ 9.4..."
+call :LOG "Ñêà÷èâàíèå ïëàãèíà ÏÈÎÒ 9.4..."
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('ftp://rustdesk.olservice.ru/files/Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview6.1.0.281.zip','%WORKDIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview6.1.0.281.zip')"
-call :LOG "ÐŸÐ»Ð°Ð³Ð¸Ð½ ÑÐºÐ°Ñ‡Ð°Ð½"
+call :LOG "Ïëàãèí ñêà÷àí"
 
 set "PLUGINS_DIR=C:\Program Files\iiko\iikoRMS\Front.Net\Plugins"
 set "FRONT_DIR=C:\Program Files\iiko\iikoRMS\Front.Net"
@@ -458,9 +470,9 @@ set "DESKTOP=%USERPROFILE%\Desktop"
 echo ========================================
 echo STOP IIKO FRONT
 echo ========================================
-call :LOG "ÐžÑÑ‚Ð°Ð½Ð¾Ð²ÐºÐ° iikoFront.Net.exe..."
+call :LOG "Îñòàíîâêà iikoFront.Net.exe..."
 taskkill /f /im iikoFront.Net.exe /T >nul 2>&1
-call :LOG "iikoFront.Net.exe Ð¾ÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½"
+call :LOG "iikoFront.Net.exe îñòàíîâëåí"
 
 echo.
 echo ========================================
@@ -472,13 +484,13 @@ set "FOUND=0"
 for /d %%D in ("%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin*") do (
     set "FOUND=1"
     echo Moving %%D to Desktop
-    call :LOG "ÐŸÐµÑ€ÐµÐ¼ÐµÑ‰ÐµÐ½Ð¸Ðµ ÑÑ‚Ð°Ñ€Ð¾Ð¹ Ð²ÐµÑ€ÑÐ¸Ð¸ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð°: %%D -> %DESKTOP%"
+    call :LOG "Ïåðåìåùåíèå ñòàðîé âåðñèè ïëàãèíà: %%D -> %DESKTOP%"
     move "%%D" "%DESKTOP%" >nul 2>&1
 )
 
 if "!FOUND!"=="0" (
     echo No old plugin found, skipping backup
-    call :LOG "Ð¡Ñ‚Ð°Ñ€Ð°Ñ Ð²ÐµÑ€ÑÐ¸Ñ Ð¿Ð»Ð°Ð³Ð¸Ð½Ð° Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½Ð°"
+    call :LOG "Ñòàðàÿ âåðñèÿ ïëàãèíà íå íàéäåíà"
 )
 
 echo.
@@ -486,46 +498,46 @@ echo ========================================
 echo COPY ZIP
 echo ========================================
 copy /y "%ZIP_FILE%" "%PLUGINS_DIR%" >nul
-call :LOG "ZIP-Ñ„Ð°Ð¹Ð» ÑÐºÐ¾Ð¿Ð¸Ñ€Ð¾Ð²Ð°Ð½ Ð² %PLUGINS_DIR%"
+call :LOG "ZIP-ôàéë ñêîïèðîâàí â %PLUGINS_DIR%"
 
 echo.
 echo ========================================
 echo EXTRACT ZIP
 echo ========================================
 powershell -NoProfile -ExecutionPolicy Bypass -Command "Expand-Archive -Force '%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview6.1.0.281.zip' '%PLUGINS_DIR%\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview6.1.0.281'"
-call :LOG "ZIP-Ñ„Ð°Ð¹Ð» Ñ€Ð°ÑÐ¿Ð°ÐºÐ¾Ð²Ð°Ð½"
+call :LOG "ZIP-ôàéë ðàñïàêîâàí"
 
 echo.
 echo ========================================
 echo START IIKO FRONT
 echo ========================================
 start "" "%FRONT_DIR%\iikoFront.Net.exe"
-call :LOG "Ð—Ð°Ð¿ÑƒÑ‰ÐµÐ½ iikoFront.Net.exe"
+call :LOG "Çàïóùåí iikoFront.Net.exe"
 
 echo Waiting for config.json...
-call :LOG "ÐžÐ¶Ð¸Ð´Ð°Ð½Ð¸Ðµ ÑÐ¾Ð·Ð´Ð°Ð½Ð¸Ñ config.json..."
+call :LOG "Îæèäàíèå ñîçäàíèÿ config.json..."
 
 set "CONFIG_FILE=%APPDATA%\iiko\CashServer\PluginConfigs\Resto.Front.Api.OnlineMarkingVerificationPlugin.V9Preview6.1.0.281\config.json"
 
 call :wait_for_file "%CONFIG_FILE%" 300
 
 if errorlevel 1 (
-    call :LOG "ÐžÐ¨Ð˜Ð‘ÐšÐ: config.json Ð½Ðµ ÑÐ¾Ð·Ð´Ð°Ð½ Ð·Ð° Ð¾Ñ‚Ð²ÐµÐ´ÐµÐ½Ð½Ð¾Ðµ Ð²Ñ€ÐµÐ¼Ñ"
+    call :LOG "ÎØÈÁÊÀ: config.json íå ñîçäàí çà îòâåäåííîå âðåìÿ"
     echo ERROR: config.json not created in time
     exit /b 1
 )
 
-call :LOG "config.json Ð¾Ð±Ð½Ð°Ñ€ÑƒÐ¶ÐµÐ½"
+call :LOG "config.json îáíàðóæåí"
 echo Config detected!
 echo DONE
 goto CLEANUP_PIOT
 
 :CLEANUP_PIOT
-call :LOG "Ð’Ð¾ÑÑÑ‚Ð°Ð½Ð¾Ð²Ð»ÐµÐ½Ð¸Ðµ Ð½Ð°ÑÑ‚Ñ€Ð¾ÐµÐº Ð·Ð°Ñ‰Ð¸Ñ‚Ñ‹..."
+call :LOG "Âîññòàíîâëåíèå íàñòðîåê çàùèòû..."
 netsh advfirewall set allprofiles state on >nul 2>&1
-call :LOG "Windows Firewall Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Windows Firewall âêëþ÷åí"
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $false" >nul 2>&1
-call :LOG "Defender Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½"
+call :LOG "Defender âêëþ÷åí"
 goto EXIT
 
 :wait_for_file
@@ -543,7 +555,7 @@ if %elapsed% geq %TIMEOUT% exit /b 1
 goto wait_loop
 
 :STATUS
-call :LOG "=== Ð ÐµÐ¶Ð¸Ð¼: ÐŸÐ ÐžÐ’Ð•Ð ÐšÐ Ð¡Ð¢ÐÐ¢Ð£Ð¡Ð ==="
+call :LOG "=== Ðåæèì: ÏÐÎÂÅÐÊÀ ÑÒÀÒÓÑÀ ==="
 
 set "WORKDIR=C:\Temp\LMInstall"
 set "TOKEN_FILE=%WORKDIR%\token.txt"
@@ -557,12 +569,12 @@ set PASSWORD=admin
 
 echo.
 echo =========================
-echo Ð¡Ð¢ÐÐ¢Ð£Ð¡
+echo ÑÒÀÒÓÑ
 echo =========================
 
-call :LOG "Ð—Ð°Ð¿Ñ€Ð¾Ñ ÑÑ‚Ð°Ñ‚ÑƒÑÐ° Ð¾Ñ‚ %HOST%:%PORT%"
+call :LOG "Çàïðîñ ñòàòóñà îò %HOST%:%PORT%"
 
-powershell -NoProfile -ExecutionPolicy Bypass "& {$pair='%LOGIN%:%PASSWORD%';$auth=[Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($pair));$headers=@{Authorization='Basic '+$auth};try{Invoke-RestMethod -Uri 'http://%HOST%:%PORT%/api/v2/status' -Method Get -Headers $headers | ConvertTo-Json -Depth 10}catch{Write-Host 'ÐžÑˆÐ¸Ð±ÐºÐ°:';Write-Host $_.Exception.Message}}"
+powershell -NoProfile -ExecutionPolicy Bypass "& {$pair='%LOGIN%:%PASSWORD%';$auth=[Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes($pair));$headers=@{Authorization='Basic '+$auth};try{Invoke-RestMethod -Uri 'http://%HOST%:%PORT%/api/v2/status' -Method Get -Headers $headers | ConvertTo-Json -Depth 10}catch{Write-Host 'Îøèáêà:';Write-Host $_.Exception.Message}}"
 
 timeout /t 10 >nul
 goto EXIT
@@ -570,7 +582,7 @@ goto EXIT
 :GET_TOKEN
 
 if errorlevel 1 (
-    call :LOG "Ð¡Ñ‚Ð°Ñ‚ÑƒÑ Ð¾Ñ‚Ð¼ÐµÐ½ÐµÐ½: Ñ‚Ð¾ÐºÐµÐ½ Ð½Ðµ Ð²Ð²ÐµÐ´ÐµÐ½"
+    call :LOG "Ñòàòóñ îòìåíåí: òîêåí íå ââåäåí"
     goto EXIT
 )
 
@@ -583,7 +595,7 @@ for /f "delims=" %%A in ('type "%TOKEN_FILE%" 2^>nul') do (
 )
 
 if defined TOKEN (
-    call :LOG "Ð¢Ð¾ÐºÐµÐ½ Ð½Ð°Ð¹Ð´ÐµÐ½"
+    call :LOG "Òîêåí íàéäåí"
     exit /b 0
 )
 
@@ -593,20 +605,20 @@ echo TOKEN MANAGER
 echo ==============================
 echo.
 
-echo Ð¢Ð¾ÐºÐµÐ½ Ð½Ðµ Ð½Ð°Ð¹Ð´ÐµÐ½.
+echo Òîêåí íå íàéäåí.
 echo.
 
-set /p TOKEN=Ð’Ð²ÐµÐ´Ð¸Ñ‚Ðµ Ñ‚Ð¾ÐºÐµÐ½:
+set /p TOKEN=Ââåäèòå òîêåí:
 
 if not defined TOKEN (
-    echo Ð¢Ð¾ÐºÐµÐ½ Ð½Ðµ Ð²Ð²ÐµÐ´ÐµÐ½.
+    echo Òîêåí íå ââåäåí.
     exit /b 1
 )
 
 powershell -NoProfile -Command "[System.IO.File]::WriteAllText('%TOKEN_FILE%', '%TOKEN%')"
 
-call :LOG "Ð¡Ð¾Ð·Ð´Ð°Ð½ Ð½Ð¾Ð²Ñ‹Ð¹ Ñ‚Ð¾ÐºÐµÐ½"
-call :LOG "Ð¢Ð¾ÐºÐµÐ½ ÑÐ¾Ñ…Ñ€Ð°Ð½ÐµÐ½ Ð² %TOKEN_FILE%"
+call :LOG "Ñîçäàí íîâûé òîêåí"
+call :LOG "Òîêåí ñîõðàíåí â %TOKEN_FILE%"
 
 exit /b 0
 
@@ -614,8 +626,8 @@ exit /b 0
 :: EXIT
 :: =======================================
 :EXIT
-call :LOG "=== Ð¡ÐšÐ Ð˜ÐŸÐ¢ Ð—ÐÐ’Ð•Ð Ð¨Ð•Ð ==="
+call :LOG "=== ÑÊÐÈÏÒ ÇÀÂÅÐØÅÍ ==="
 echo.
-echo Ð’Ñ‹Ñ…Ð¾Ð´...
+echo Âûõîä...
 timeout /t 2 >nul
 exit /b
