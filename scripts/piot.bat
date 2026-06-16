@@ -2,13 +2,25 @@
 chcp 1251 >nul
 setlocal EnableExtensions EnableDelayedExpansion
 
+:: Проверка прав администратора
+net session >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Требуются права администратора...
+    
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "Start-Process '%~f0' -Verb RunAs"
+
+    exit /b
+)
+
+
 set "WORKDIR=C:\Temp\LMInstall"
 set "LOGFILE=%WORKDIR%\main.log"
 
-REM Всегда логируем всё (убрал LOG_ON)
+
 if not exist "%WORKDIR%" mkdir "%WORKDIR%" 2>nul
 
-REM Очищаем лог при новом запуске
+REM Очистка перед стартом
 echo ===============================================> "%LOGFILE%"
 echo START %DATE% %TIME%>> "%LOGFILE%"
 echo ===============================================>> "%LOGFILE%"
@@ -307,17 +319,16 @@ netsh advfirewall set allprofiles state off >nul 2>&1
 call :LOG "Отключаем Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
-REM Корневые сертификаты
-call :LOG "Установка корневых сертификатов..."
+
+call :LOG "Установка сертификатов в доверенные корневые центры..."
+
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\ca.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt_base.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 
-REM Доверенные лица
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 call :LOG "Сертификаты установлены"
-
 echo.
 echo Сертификаты установлены.
 
@@ -414,17 +425,16 @@ netsh advfirewall set allprofiles state off >nul 2>&1
 call :LOG "Отключаем Defender..."
 powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
 
-REM Корневые сертификаты
-call :LOG "Установка корневых сертификатов..."
+
+call :LOG "Установка сертификатов в доверенные корневые центры..."
+
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\ca.crt" >nul 2>&1
 certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt_base.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 
-REM Доверенные лица
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
-certutil -addstore "TrustedPeople" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 call :LOG "Сертификаты установлены"
-
 echo.
 echo Сертификаты установлены.
 
