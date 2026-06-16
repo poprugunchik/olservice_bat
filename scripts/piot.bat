@@ -29,7 +29,7 @@ echo.>> "%LOGFILE%"
 
 call :LOG "=== Скрипт запущен ==="
 
-call :RUN
+
 exit /b
 
 :LOG
