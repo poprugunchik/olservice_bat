@@ -211,6 +211,7 @@ for /f "delims=" %%A in (%LIST%) do (
         call :LOG "Скачивание reg_install..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/reg_install.exe','%WORKDIR%\reg_install.exe')"
         call :LOG "LM компоненты скачаны"
+	
     )
 
     if "%%A"=="KKT" (
