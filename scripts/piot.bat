@@ -1,5 +1,6 @@
 @echo off
 chcp 1251 >nul
+setlocal
 setlocal EnableExtensions EnableDelayedExpansion
 
 :: Проверка прав администратора
