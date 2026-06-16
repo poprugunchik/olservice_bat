@@ -201,7 +201,7 @@ if "%NET48_INSTALLED%"=="1" (
     call :LOG "Файл .NET скачан: %FRAMEWORK_FILE%"
 
     :: 4. установка
-    start /wait "" "%FRAMEWORK_FILE%" /quiet /norestart
+    start /wait "" "%FRAMEWORK_FILE%" /quiet
     call :LOG "Установка .NET 4.8 завершена с кодом: %errorlevel%"
 
     if errorlevel 1 (
