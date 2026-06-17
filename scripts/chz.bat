@@ -7,142 +7,54 @@ setlocal enabledelayedexpansion
 :: ===============================
 set "FRAMEWORK_URL=https://go.microsoft.com/fwlink/?LinkId=2088631"
 set "FRAMEWORK_FILE=%TEMP%\ndp48-x86-x64-allos-enu.exe"
+set "FTP_URL=ftp://rustdesk.olservice.ru/files/ndp48-x86-x64-allos-enu.exe"
+set "FTP=ftp://rustdesk.olservice.ru/files"
+set "USER=olservice"
+set "PASS=Пампам123"
 
-set "MSI_URL=https://xn--80ajghhoc2aj1c8b.xn--p1ai/upload/regime-2.5.1-2.msi"
-set "MSI_FILE=regime.msi"
+echo.
+echo ========================================
+echo CHECK .NET 4.8
+echo ========================================
+set "NET48_INSTALLED=0"
 
-:: ===============================
-:: Удаление старой версии
-:: ===============================
-echo Проверяем наличие старой версии Честного ЗНАК модуля...
-
-set "OLD_PRODUCT_CODE="
-
-:: Поиск в обычном реестре
-for /f "tokens=2 delims={}" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "regime" ^| findstr /i "{"') do (
-    if not defined OLD_PRODUCT_CODE set "OLD_PRODUCT_CODE={%%A}"
+for /f "tokens=3" %%A in (
+    'reg query "HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full" /v Release 2^>nul ^| find "Release"'
+) do (
+    if %%A GEQ 528040 set "NET48_INSTALLED=1"
 )
 
-:: Поиск в WOW6432Node
-for /f "tokens=2 delims={}" %%A in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall" /s /f "regime" ^| findstr /i "{"') do (
-    if not defined OLD_PRODUCT_CODE set "OLD_PRODUCT_CODE={%%A}"
-)
-
-if defined OLD_PRODUCT_CODE (
-    echo Найдена установленная старая версия: %OLD_PRODUCT_CODE%
-    echo Удаляем старый модуль...
-    msiexec /x %OLD_PRODUCT_CODE% /qn /norestart
-    echo Старый модуль удалён.
+if "%NET48_INSTALLED%"=="1" (
+    echo .NET 4.8 already installed
 ) else (
-    echo Старая версия не найдена.
-)
+    echo Installing .NET 4.8...
 
-:: ===============================
-:: Выключаем Firewall и Defender
-:: ===============================
-echo Отключаем Windows Firewall...
-netsh advfirewall set allprofiles state off >nul 2>&1
+    :: 1. FTP (основной)
+    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+    "try { $wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP_URL%','%FRAMEWORK_FILE%') } catch { }"
 
-echo Отключаем Защиту в реальном времени Windows Defender...
-powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
+    :: 2. Microsoft (fallback + FIX TLS)
+    if not exist "%FRAMEWORK_FILE%" (
+        powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+        "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%FRAMEWORK_URL%' -OutFile '%FRAMEWORK_FILE%' -ErrorAction Stop } catch { }"
+    )
 
-:: ===============================
-:: Проверка .NET Framework 4.8
-:: ===============================
-set "RegKey=HKLM\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full"
-set "VersionValue=Release"
+    :: 3. Финальная проверка
+    if not exist "%FRAMEWORK_FILE%" (
+        echo ERROR: Failed to download .NET 4.8
+        goto :CLEANUP
+    )
 
-for /f "tokens=3" %%A in ('reg query "%RegKey%" /v "%VersionValue%" 2^>nul') do set Release=%%A
+    :: 4. Установка
+    start /wait "" "%FRAMEWORK_FILE%" /quiet /norestart
 
-if not defined Release (
-    echo .NET Framework 4.8 не установлен. Запускаем установку...
-    goto InstallFramework
-)
-
-if %Release% GEQ 528040 (
-    echo .NET Framework 4.8 установлен.
-    goto MSIInstall
-) else (
-    echo Установлена версия ниже 4.8: Release=%Release%. Запускаем установку...
-    goto InstallFramework
-)
-
-:: ===============================
-:: Установка .NET Framework 4.8
-:: ===============================
-:InstallFramework
-if not exist "%FRAMEWORK_FILE%" (
-    echo Скачивание .NET Framework 4.8...
-    curl -L -o "%FRAMEWORK_FILE%" "%FRAMEWORK_URL%" --retry 3 --progress-bar
     if errorlevel 1 (
-        echo Ошибка скачивания Framework!
-        pause
-        exit /b 1
+        echo ERROR: .NET 4.8 installation failed
+        goto :CLEANUP
     )
 )
 
-echo Запуск установки .NET Framework 4.8...
-"%FRAMEWORK_FILE%" /qb /norestart /log "%~dp0framework_install_log.txt"
-set FRAMEWORK_RESULT=%ERRORLEVEL%
-
-if %FRAMEWORK_RESULT%==0 (
-    echo .NET Framework успешно установлен.
-) else if %FRAMEWORK_RESULT%==3010 (
-    echo Требуется перезагрузка для завершения установки Framework.
-    shutdown /r /t 5
-    exit
-) else if %FRAMEWORK_RESULT%==2350 (
-    echo Требуется перезагрузка для завершения установки Framework.
-    shutdown /r /t 5
-    exit
-) else (
-    echo Ошибка установки Framework! Код: %FRAMEWORK_RESULT%
-    pause
-    exit /b 1
-)
-
-:: ===============================
-:: Установка MSI
-:: ===============================
-:MSIInstall
-echo ================================
-echo Скачивание Локального модуля ЧЗ...
-echo ================================
-curl -L -o "%MSI_FILE%" "%MSI_URL%" --retry 3 --progress-bar
-if errorlevel 1 (
-    echo Ошибка скачивания ЧЗ!
-    pause
-    exit /b 1
-)
-
-echo ================================
-echo Запуск установки "Локального модуля ЧЗ"...
-echo ================================
-msiexec /i "%MSI_FILE%" /qf /norestart
-set MSI_CODE=%ERRORLEVEL%
-
-echo Код установки MSI: %MSI_CODE%
-
-if "%MSI_CODE%"=="0" (
-    echo Установка завершена успешно.
-    goto AfterMSI
-)
-
-if "%MSI_CODE%"=="3010" (
-    echo MSI сообщил о необходимости перезагрузки, но продолжаем.
-    goto AfterMSI
-)
-
-if "%MSI_CODE%"=="-2147021886" (
-    echo MSI сообщил код 0x80070BC2 (нужна перезагрузка). Продолжаем.
-    goto AfterMSI
-)
-
-echo Ошибка установки MSI! Код: %MSI_CODE%
-pause
-exit /b 1
-
-:AfterMSI
+:CLEANUP
 
 :: ===============================
 :: Включаем защиту
