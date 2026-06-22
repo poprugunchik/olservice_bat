@@ -364,7 +364,9 @@ $list.Items.AddRange(@(
     "RustDesk — Установить клиент",
     "iikoCard — Работа с iikocard",
     "Clean — Очистка временных файлов",
-    "Framework+chz — установка ЧЗ и фреймворков",
+	"УТМ - установка или обновление",
+    "Framework — установка фреймворков",
+	"Установка и настройка ПИОТ",
     "Прошу тебя только не нажимай сюда!",
     "OrderCheck - скачивает и запускает OrderCheck",
     "Если не получается ничего скачать!"
@@ -414,34 +416,83 @@ $run.Add_Click({
         0 { $Script = "rustdesk.bat" }
         1 { $Script = "iikocard.bat" }
         2 { $Script = "clean.bat" }
-        3 { $Script = "chz.bat" }
-        4 { $Script = "update_service.exe" }
-        5 { $Script = "ordercheck.bat" }
-        6 { $Script = "curl.bat" }
-        default {
-            [System.Windows.Forms.MessageBox]::Show("Выберите действие")
-            return
-        }
+        3 { $Script = "utm.bat" }
+        4 { $Script = "chz.bat" }
+        5 { $Script = "piot.bat" }
+        6 { $Script = "update_service.exe" }
+        7 { $Script = "ordercheck.bat" }
+        8 { $Script = "curl.bat" }
+        default { return }
     }
 
     $Local = Join-Path $WorkDir $Script
     Log INFO "Local script: $Local"
 
-    if (
+    $FtpBase = "ftp://rustdesk.olservice.ru/files"
+    $FtpUser = "olservice"
+    $FtpPass = "Пампам123"
+
+    $NeedDownload =
         !(Test-Path $Local) -or
         ((Get-Date) - (Get-Item $Local).LastWriteTime).TotalHours -gt 24
-    ) {
+
+    if ($NeedDownload) {
+    try {
+
+        # ==========================
+        # 1. ПЫТАЕМСЯ FTP (ОСНОВНОЙ)
+        # ==========================
+        $Url = "$FtpBase/$Script"
+        Log INFO "Trying FTP: $Url"
+
+        $client = New-Object System.Net.WebClient
+
+        if ($Script -eq "piot.bat" -or $Script -eq "iikocard.bat") {
+            $client.Credentials = New-Object System.Net.NetworkCredential($FtpUser, $FtpPass)
+        }
+
+        $client.DownloadFile($Url, $Local)
+
+        Log INFO "Downloaded from FTP"
+
+    }
+    catch {
+
+        Log WARN "FTP failed: $($_.Exception.Message)"
+        Log INFO "Trying GitHub fallback..."
+
         try {
-            Log INFO "Downloading $Script from $Repo"
+
+            # ==========================
+            # 2. GITHUB (FALLBACK)
+            # ==========================
+            $Url = "$Repo/$Script"
+            Log INFO "Trying GitHub: $Url"
+
+            $client = New-Object System.Net.WebClient
             [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-            Invoke-WebRequest -Uri "$Repo/$Script" -OutFile $Local
-            Log INFO "Download complete: $Local"
-        } catch {
-            Log ERROR "Download failed: $($_.Exception.Message)"
-            [System.Windows.Forms.MessageBox]::Show("Не удалось скачать $Script")
+
+            $client.DownloadFile($Url, $Local)
+
+            Log INFO "Downloaded from GitHub (fallback)"
+
+        }
+        catch {
+
+            Log ERROR "GitHub fallback failed: $($_.Exception.Message)"
+
+            [System.Windows.Forms.MessageBox]::Show(
+                "Не удалось скачать $Script ни с FTP, ни с GitHub",
+                "Ошибка",
+                [System.Windows.Forms.MessageBoxButtons]::OK,
+                [System.Windows.Forms.MessageBoxIcon]::Error
+            )
+
             return
         }
     }
+}
+
 
     if (!(Test-Path $Local)) {
         Log ERROR "File not found: $Local"
