@@ -44,28 +44,42 @@ set "WORKDIR=C:\Temp\LMInstall"
 set "LIST=%WORKDIR%\install_list.txt"
 set "FRAMEWORK_URL=https://go.microsoft.com/fwlink/?LinkId=2088631"
 set "FRAMEWORK_FILE=%TEMP%\ndp48-x86-x64-allos-enu.exe"
-set "FTP_URL=ftp://rustdesk.olservice.ru/files/ndp48-x86-x64-allos-enu.exe"
+set "FTP_URL=ftp://rustdesk.olservice.ru/files/NDP48-x86-x64-AllOS-ENU.exe"
 set "FTP=ftp://rustdesk.olservice.ru/files"
 set "USER=olservice"
 set "PASS=Пампам123"
 
 if not exist "%WORKDIR%" mkdir "%WORKDIR%" 2>nul
 
+echo ==================================================
+echo                    ПИОТ ГОСПОДИ
+echo ==================================================
 echo.
-echo ========================================
-echo            ПИОТ ГОСПОДИ
-echo ========================================
+echo [ УСТАНОВКА ]
+echo --------------------------------------------------
+echo   1. Первичная установка
+echo   2. Настройка ПИОТ и IIKO
+echo   3. Установка сертификатов
 echo.
-echo 1 - Первичная установка
-echo 2 - Настройка ПИОТ
-echo 3 - Проверка статуса ПИОТ
-echo 0 - Выход
+echo [ ДИАГНОСТИКА ]
+echo --------------------------------------------------
+echo   4. Проверка статуса ПИОТ
+echo   5. Переустановка ЕСМ
+echo   6. Повторная инициализация
+echo.
+echo --------------------------------------------------
+echo   0. Выход
+echo ==================================================
 echo.
 
-choice /c 1230 /m "Выберите режим"
 
-if errorlevel 4 goto :EXIT
-if errorlevel 3 goto :STATUS
+choice /c 1234560 /m "Выберите режим"
+
+if errorlevel 7 goto :EXIT
+if errorlevel 6 goto :RETRYINIT
+if errorlevel 5 goto :ESM
+if errorlevel 4 goto :STATUS
+if errorlevel 3 goto :CERT
 if errorlevel 2 goto :PIOT_SETUP
 if errorlevel 1 goto :FIRST_INSTALL
 
@@ -77,6 +91,18 @@ call :LOG "=== Режим: ПЕРВИЧНАЯ УСТАНОВКА ==="
 echo.
 echo Выбран режим: Первичная установка
 echo ========================================
+
+
+echo Добавление портов в брандмауер
+echo ========================================
+netsh advfirewall firewall add rule name="TCP_50063" dir=in action=allow protocol=TCP localport=50063
+netsh advfirewall firewall add rule name="TCP_5063" dir=in action=allow protocol=TCP localport=5063
+netsh advfirewall firewall add rule name="TCP_50401" dir=in action=allow protocol=TCP localport=50401
+netsh advfirewall firewall add rule name="TCP_51401" dir=in action=allow protocol=TCP localport=51401
+netsh advfirewall firewall add rule name="TCP_51077" dir=in action=allow protocol=TCP localport=51077
+netsh advfirewall firewall add rule name="TCP_5995" dir=in action=allow protocol=TCP localport=5995
+
+
 
 set "TOKEN_FILE=%WORKDIR%\token.txt"
 
@@ -146,7 +172,7 @@ if exist "%LIST%" del "%LIST%" 2>nul
 
 call :LOG "Проверка установленных компонентов..."
 
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$list=@('ESM|Единый Сервисный Модуль|1.6.2.1','KKT|Драйвер ККТ v.10 (32-bit)|10.10.8.24','LM|Локальный модуль Честный Знак|2.5.1','CONTROLLER|ЕСП Контроллер ЛМ ЧЗ|1.6.2.1'); $reg=Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue; $need=@(); foreach($i in $list){$key,$name,$ver=$i -split '\|'; $found=$reg | Where-Object { $_.DisplayName -and $_.DisplayName -like ('*'+$name+'*') } | Select-Object -ExpandProperty DisplayVersion -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $found){Write-Host '[NOT INSTALLED]' $key; $need+=$key} elseif([version]$found -ne [version]$ver){Write-Host '[VERSION MISMATCH]' $key '->' $found 'required:' $ver; $need+=$key} else {Write-Host '[OK]' $key '->' $found}}; $need | Set-Content '%LIST%' -Encoding ASCII"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$list=@('ESM|Единый Сервисный Модуль|1.6.3.0','KKT|Драйвер ККТ v.10 (32-bit)|10.10.8.24','LM|Локальный модуль Честный Знак|2.5.1','CONTROLLER|ЕСП Контроллер ЛМ ЧЗ|1.6.2.1'); $reg=Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue; $need=@(); foreach($i in $list){$key,$name,$ver=$i -split '\|'; $found=$reg | Where-Object { $_.DisplayName -and $_.DisplayName -like ('*'+$name+'*') } | Select-Object -ExpandProperty DisplayVersion -ErrorAction SilentlyContinue | Select-Object -First 1; if(-not $found){Write-Host '[NOT INSTALLED]' $key; $need+=$key} elseif([version]$found -ne [version]$ver){Write-Host '[VERSION MISMATCH]' $key '->' $found 'required:' $ver; $need+=$key} else {Write-Host '[OK]' $key '->' $found}}; $need | Set-Content '%LIST%' -Encoding ASCII"
 
 echo.
 echo NEED INSTALL LIST
@@ -181,15 +207,13 @@ if "%NET48_INSTALLED%"=="1" (
     call :LOG "Начинаем установку .NET 4.8..."
 
     :: 1. FTP (основной)
-    powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-    "try { $wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP_URL%','%FRAMEWORK_FILE%') } catch { }"
+	powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP_URL%','%FRAMEWORK_FILE%') } catch { }"
 
     :: 2. Microsoft (fallback + FIX TLS)
     if not exist "%FRAMEWORK_FILE%" (
         call :LOG "FTP не сработал, пробуем Microsoft..."
 
-        powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-        "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%FRAMEWORK_URL%' -OutFile '%FRAMEWORK_FILE%' -ErrorAction Stop } catch { }"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "[Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try { Invoke-WebRequest -Uri '%FRAMEWORK_URL%' -OutFile '%FRAMEWORK_FILE%' -ErrorAction Stop } catch { }"
     )
 
     :: 3. финальная проверка
@@ -203,7 +227,7 @@ if "%NET48_INSTALLED%"=="1" (
     :: 4. установка
     start /wait "" "%FRAMEWORK_FILE%" /quiet
     call :LOG "Установка .NET 4.8 завершена с кодом: %errorlevel%"
-
+	
     if errorlevel 1 (
         call :LOG "ОШИБКА: Установка .NET 4.8 не удалась"
         goto :CLEANUP
@@ -222,7 +246,7 @@ for /f "delims=" %%A in (%LIST%) do (
 
     if "%%A"=="ESM" (
         call :LOG "Скачивание ESM main package..."
-        powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm_1.6.2.1-windows-signed-setup.exe','%WORKDIR%\esm_1.6.2.1-windows-signed-setup.exe')"
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm_1.6.3.0-windows-signed-setup.exe','%WORKDIR%\esm_1.6.3.0-windows-signed-setup.exe')"
         
         call :LOG "Скачивание ESM helper..."
         powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm_install.exe','%WORKDIR%\esm_install.exe')"
@@ -268,6 +292,7 @@ call "%WORKDIR%\installer.bat"
 echo ERRORLEVEL=%ERRORLEVEL%
 
 call :LOG "installer.bat завершил работу"
+
 popd
 
 echo.
@@ -344,6 +369,9 @@ certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 call :LOG "Сертификаты установлены"
 echo.
 echo Сертификаты установлены.
+
+call :ESM
+call :LOG "Установка ЕСМ"
 
 :: =======================================
 :: PIOT INSTALL FLOW
@@ -450,6 +478,9 @@ certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
 call :LOG "Сертификаты установлены"
 echo.
 echo Сертификаты установлены.
+
+call :ESM
+call :LOG "Установка ЕСМ"
 
 :: =======================================
 :: PIOT INSTALL FLOW
@@ -621,6 +652,62 @@ call :LOG "Создан новый токен"
 call :LOG "Токен сохранен в %TOKEN_FILE%"
 
 exit /b 0
+
+:: =======================================
+:: ESM
+:: =======================================
+:ESM
+
+call :LOG "Скачивание ESM main package..."
+        powershell -NoProfile -ExecutionPolicy Bypass -Command "$wc=New-Object Net.WebClient; $wc.Credentials=New-Object Net.NetworkCredential('%USER%','%PASS%'); $wc.DownloadFile('%FTP%/esm.bat','%WORKDIR%\esm.bat')"
+
+call :LOG "Скачивание ESM.bat..."
+		
+call "%WORKDIR%\esm.bat"
+
+call :LOG "Токен сохранен в %TOKEN_FILE%"
+
+exit /b 0
+
+
+
+
+:CERT
+echo ========================================
+echo ADD CERITIFICATES
+echo ========================================
+echo Установка сертификатов...
+call :LOG "Отключаем Windows Firewall..."
+netsh advfirewall set allprofiles state off >nul 2>&1
+call :LOG "Отключаем Defender..."
+powershell -NoProfile -Command "Set-MpPreference -DisableRealtimeMonitoring $true" >nul 2>&1
+
+
+call :LOG "Установка сертификатов в доверенные корневые центры..."
+
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\ca.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt_base.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\esp.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\gismt.crt" >nul 2>&1
+certutil -addstore "Root" "C:\ProgramData\ESP\ESM\um\server.crt" >nul 2>&1
+
+call :LOG "Сертификаты установлены"
+timeout /t 5 >nul
+echo.
+echo Сертификаты установлены.
+goto: CLEANUP
+
+:RETRYINIT
+echo ========================================
+echo ПОВТОРНАЯ ИНИЦИАЛИЗАЦИЯ
+echo ========================================
+
+
+start "" cmd /c "%WORKDIR%\init.bat"
+call :LOG "Запущен init.bat"
+
+goto: CLEANUP
+
 
 :: =======================================
 :: EXIT
