@@ -319,7 +319,7 @@ public class KeyboardLayout {
 # ПРОВЕРКА ПАРОЛЯ
 # =====================================
 
-$CorrectPassword = "zxc123asd456"
+$CorrectPassword = "asd456zxc123"
 
 do {
     $input = Prompt-Password
@@ -365,12 +365,9 @@ $list.Items.AddRange(@(
     "iikoCard — Работа с iikocard",
     "Clean — Очистка временных файлов",
 	"УТМ - установка или обновление",
-    "Framework — установка фреймворков",
 	"Установка и настройка ПИОТ",
-    "Прошу тебя только не нажимай сюда!",
     "OrderCheck - скачивает и запускает OrderCheck",
-    "Если не получается ничего скачать!"
-
+	"Первичная установка IIKO"
 ))
 $form.Controls.Add($list)
 
@@ -417,11 +414,9 @@ $run.Add_Click({
         1 { $Script = "iikocard.bat" }
         2 { $Script = "clean.bat" }
         3 { $Script = "utm.bat" }
-        4 { $Script = "chz.bat" }
-        5 { $Script = "piot.bat" }
-        6 { $Script = "update_service.exe" }
-        7 { $Script = "ordercheck.bat" }
-        8 { $Script = "curl.bat" }
+        4 { $Script = "piot.bat" }
+        5 { $Script = "ordercheck.bat" }
+        6 { $Script = "olservice_startup.exe" }
         default { return }
     }
 
@@ -446,6 +441,7 @@ $run.Add_Click({
         Log INFO "Trying FTP: $Url"
 
         $client = New-Object System.Net.WebClient
+		$client.Credentials = New-Object System.Net.NetworkCredential($FtpUser, $FtpPass)
 
         if ($Script -eq "piot.bat" -or $Script -eq "iikocard.bat") {
             $client.Credentials = New-Object System.Net.NetworkCredential($FtpUser, $FtpPass)
