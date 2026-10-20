@@ -364,6 +364,8 @@ $list.Items.AddRange(@(
     "RustDesk — Установить клиент",
     "iikoCard — Работа с iikocard",
     "Clean — Очистка временных файлов",
+	"Sailplay — установка плагинов OPC",
+	"Zdraste — установка плагинов Здрасте",
 	"УТМ - установка или обновление",
 	"Установка и настройка ПИОТ",
     "OrderCheck - скачивает и запускает OrderCheck",
@@ -413,10 +415,12 @@ $run.Add_Click({
         0 { $Script = "rustdesk.bat" }
         1 { $Script = "iikocard.bat" }
         2 { $Script = "clean.bat" }
-        3 { $Script = "utm.bat" }
-        4 { $Script = "piot.bat" }
-        5 { $Script = "ordercheck.bat" }
-        6 { $Script = "olservice_startup.exe" }
+		3 { $Script = "sailplay.bat" }
+		4 { $Script = "zdraste.bat" }
+        5 { $Script = "utm.bat" }
+        6 { $Script = "piot.bat" }
+        7 { $Script = "ordercheck.bat" }
+        8 { $Script = "olservice_startup.exe" }
         default { return }
     }
 
